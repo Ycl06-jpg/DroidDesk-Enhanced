@@ -88,10 +88,10 @@ class _DEInstallScreenState extends State<DEInstallScreen> {
                   // ── Header ──
                   Text(
                     isDone
-                        ? 'Installation Complete'
+                        ? 'Kurulum Tamamlandı'
                         : hasError
-                        ? 'Installation Failed'
-                        : 'Configuring\nLinux Workstation',
+                        ? 'Kurulum Başarısız'
+                        : 'Linux İş İstasyonu\nYapılandırılıyor',
                     style: DroidTheme.headingXl.copyWith(color: Colors.white),
                     textAlign: TextAlign.center,
                   ).animate().fadeIn(duration: 500.ms).slideY(begin: -0.2),
@@ -99,8 +99,8 @@ class _DEInstallScreenState extends State<DEInstallScreen> {
                   const SizedBox(height: 8),
                   Text(
                     isDone
-                        ? 'Your Linux environment is ready.'
-                        : 'Downloading and configuring system packages.',
+                        ? 'Linux ortamınız hazır.'
+                        : 'Sistem paketleri indiriliyor ve yapılandırılıyor.',
                     style: DroidTheme.bodyMd.copyWith(color: Colors.white60),
                     textAlign: TextAlign.center,
                   ).animate().fadeIn(delay: 200.ms),
@@ -168,7 +168,7 @@ class _DEInstallScreenState extends State<DEInstallScreen> {
                         Text(
                           state.extractStatus.isNotEmpty
                               ? state.extractStatus
-                              : 'Extracting packages...',
+                              : 'Paketler çıkarılıyor...',
                           style: DroidTheme.monoSm.copyWith(
                             color: Colors.white70,
                           ),
@@ -189,7 +189,7 @@ class _DEInstallScreenState extends State<DEInstallScreen> {
                         backgroundColor: DroidTheme.primary,
                       ),
                       child: Text(
-                        'Return to Home',
+                        'Ana Ekrana Dön',
                         style: DroidTheme.headingSm.copyWith(
                           color: Colors.white,
                         ),
@@ -209,7 +209,7 @@ class _DEInstallScreenState extends State<DEInstallScreen> {
                         backgroundColor: DroidTheme.error,
                       ),
                       child: Text(
-                        'Go Back',
+                        'Geri Dön',
                         style: DroidTheme.headingSm.copyWith(
                           color: Colors.white,
                         ),
@@ -229,7 +229,7 @@ class _DEInstallScreenState extends State<DEInstallScreen> {
                           color: DroidTheme.primary,
                         ),
                         label: Text(
-                          'Support Open Source',
+                          'Açık Kaynağı Destekle',
                           style: DroidTheme.bodySm.copyWith(
                             color: Colors.white70,
                           ),
