@@ -19,63 +19,63 @@ class _AppCatalogScreenState extends State<AppCatalogScreen>
     _FeaturedApp(
       'firefox',
       'Firefox',
-      'Fast, private desktop web browser.',
+      'Hızlı, gizliliğe önem veren masaüstü web tarayıcısı.',
       Icons.public_rounded,
       Color(0xFFFF7139),
     ),
     _FeaturedApp(
       'code-oss',
       'Code OSS',
-      'Powerful desktop code editor and IDE.',
+      'Güçlü masaüstü kod editörü ve IDE.',
       Icons.code_rounded,
       Color(0xFF23A8F2),
     ),
     _FeaturedApp(
       'libreoffice',
       'LibreOffice',
-      'Documents, spreadsheets, and presentations.',
+      'Belgeler, elektronik tablolar ve sunumlar.',
       Icons.description_rounded,
       Color(0xFF18A303),
     ),
     _FeaturedApp(
       'gimp',
       'GIMP',
-      'Professional image editing and design tools.',
+      'Profesyonel görsel düzenleme ve tasarım araçları.',
       Icons.brush_rounded,
       Color(0xFF9A7654),
     ),
     _FeaturedApp(
       'blender',
       'Blender',
-      'Complete open-source 3D creation suite.',
+      'Eksiksiz açık kaynak 3D tasarım paketi.',
       Icons.view_in_ar_rounded,
       Color(0xFFF5792A),
     ),
     _FeaturedApp(
       'vlc',
       'VLC',
-      'Play almost every audio and video format.',
+      'Hemen hemen her ses ve video formatını oynatır.',
       Icons.play_circle_rounded,
       Color(0xFFFF8800),
     ),
     _FeaturedApp(
       'nodejs',
       'Node.js + npm',
-      'JavaScript runtime and package manager.',
+      'JavaScript çalışma zamanı ve paket yöneticisi.',
       Icons.javascript_rounded,
       Color(0xFF68A063),
     ),
     _FeaturedApp(
       'python',
       'Python',
-      'Popular programming language and tools.',
+      'Popüler programlama dili ve araçları.',
       Icons.terminal_rounded,
       Color(0xFFFFD43B),
     ),
     _FeaturedApp(
       'imagemagick',
       'ImageMagick',
-      'Image conversion and processing toolkit.',
+      'Görsel dönüştürme ve işleme araç seti.',
       Icons.image_rounded,
       DroidTheme.primaryLight,
     ),
@@ -188,7 +188,7 @@ class _AppCatalogScreenState extends State<AppCatalogScreen>
     setState(() {
       _activePackage = packageName;
       _operationProgress = 0;
-      _operationStatus = 'Preparing $packageName...';
+      _operationStatus = '$packageName hazırlanıyor...';
       _operationLog = '';
       _cancelRequested = false;
       _cancelling = false;
@@ -205,10 +205,10 @@ class _AppCatalogScreenState extends State<AppCatalogScreen>
       SnackBar(
         content: Text(
           cancelled
-              ? '$packageName installation cancelled'
+              ? '$packageName kurulumu iptal edildi'
               : ok
-              ? '$packageName installed'
-              : '$packageName installation failed',
+              ? '$packageName kuruldu'
+              : '$packageName kurulumu başarısız oldu',
         ),
         backgroundColor: cancelled
             ? DroidTheme.surfaceLight
@@ -224,7 +224,7 @@ class _AppCatalogScreenState extends State<AppCatalogScreen>
     setState(() {
       _cancelRequested = true;
       _cancelling = true;
-      _operationStatus = 'Cancelling installation...';
+      _operationStatus = 'Kurulum iptal ediliyor...';
     });
     await DroidDeskPlatform.cancelNativePackageOperation();
   }
@@ -233,16 +233,16 @@ class _AppCatalogScreenState extends State<AppCatalogScreen>
     final confirmed = await showDialog<bool>(
       context: context,
       builder: (context) => AlertDialog(
-        title: Text('Remove ${package.displayName}?'),
-        content: const Text('Dependent packages may also be affected.'),
+        title: Text('${package.displayName} kaldırılsın mı?'),
+        content: const Text('Bağımlı paketler de etkilenebilir.'),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(context, false),
-            child: const Text('Cancel'),
+            child: const Text('İptal'),
           ),
           FilledButton(
             onPressed: () => Navigator.pop(context, true),
-            child: const Text('Remove'),
+            child: const Text('Kaldır'),
           ),
         ],
       ),
@@ -251,7 +251,7 @@ class _AppCatalogScreenState extends State<AppCatalogScreen>
     setState(() {
       _activePackage = package.name;
       _operationProgress = 0;
-      _operationStatus = 'Preparing removal...';
+      _operationStatus = 'Kaldırma hazırlanıyor...';
       _operationLog = '';
       _cancelRequested = false;
       _cancelling = false;
@@ -262,7 +262,7 @@ class _AppCatalogScreenState extends State<AppCatalogScreen>
     setState(() => _activePackage = null);
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
-        content: Text(ok ? '${package.displayName} removed' : 'Removal failed'),
+        content: Text(ok ? '${package.displayName} kaldırıldı' : 'Kaldırma başarısız oldu'),
         backgroundColor: ok ? DroidTheme.success : DroidTheme.error,
       ),
     );
@@ -272,13 +272,13 @@ class _AppCatalogScreenState extends State<AppCatalogScreen>
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Linux App Store'),
+        title: const Text('Linux Uygulama Mağazası'),
         bottom: TabBar(
           controller: _tabs,
           tabs: const [
-            Tab(icon: Icon(Icons.auto_awesome_rounded), text: 'Featured'),
-            Tab(icon: Icon(Icons.search_rounded), text: 'Browse'),
-            Tab(icon: Icon(Icons.download_done_rounded), text: 'Installed'),
+            Tab(icon: Icon(Icons.auto_awesome_rounded), text: 'Öne Çıkanlar'),
+            Tab(icon: Icon(Icons.search_rounded), text: 'Gözat'),
+            Tab(icon: Icon(Icons.download_done_rounded), text: 'Kurulu'),
           ],
         ),
       ),
@@ -302,8 +302,8 @@ class _AppCatalogScreenState extends State<AppCatalogScreen>
       if (!state.hasRoot)
         const _FeaturedApp(
           'proot_debian',
-          'Debian Compatibility',
-          'Run packages unavailable in native repositories.',
+          'Debian Uyumluluğu',
+          'Yerel depolarda bulunmayan paketleri çalıştırın.',
           Icons.inventory_2_rounded,
           Color(0xFFD70A53),
           optional: true,
@@ -312,10 +312,10 @@ class _AppCatalogScreenState extends State<AppCatalogScreen>
     return ListView(
       padding: const EdgeInsets.fromLTRB(20, 18, 20, 32),
       children: [
-        Text('Popular Linux applications', style: DroidTheme.headingMd),
+        Text('Popüler Linux uygulamaları', style: DroidTheme.headingMd),
         const SizedBox(height: 5),
         Text(
-          'Hand-picked apps tested for DroidDesk.',
+          'DroidDesk için özenle seçilmiş ve test edilmiş uygulamalar.',
           style: DroidTheme.bodyMd,
         ),
         const SizedBox(height: 18),
@@ -348,7 +348,7 @@ class _AppCatalogScreenState extends State<AppCatalogScreen>
             controller: _searchController,
             onChanged: _queueSearch,
             decoration: InputDecoration(
-              hintText: 'Search packages, apps, and tools',
+              hintText: 'Paket, uygulama ve araç ara',
               prefixIcon: const Icon(Icons.search_rounded),
               suffixIcon: _searching
                   ? const Padding(
@@ -367,7 +367,7 @@ class _AppCatalogScreenState extends State<AppCatalogScreen>
         ),
         Expanded(
           child: _searchResults.isEmpty && !_searching
-              ? const Center(child: Text('No matching packages found'))
+              ? const Center(child: Text('Eşleşen paket bulunamadı'))
               : ListView.separated(
                   padding: const EdgeInsets.fromLTRB(18, 8, 18, 28),
                   itemCount: _searchResults.length,
@@ -390,7 +390,7 @@ class _AppCatalogScreenState extends State<AppCatalogScreen>
           ? ListView(
               children: const [
                 SizedBox(height: 220),
-                Center(child: Text('No packages installed yet')),
+                Center(child: Text('Henüz kurulu paket yok')),
               ],
             )
           : ListView.separated(
@@ -451,7 +451,7 @@ class _AppCatalogScreenState extends State<AppCatalogScreen>
                 const SizedBox(height: 3),
                 Text(
                   package.description.isEmpty
-                      ? 'Linux package'
+                      ? 'Linux paketi'
                       : package.description,
                   style: DroidTheme.bodySm,
                   maxLines: 2,
@@ -461,7 +461,7 @@ class _AppCatalogScreenState extends State<AppCatalogScreen>
                 Text(
                   [
                     if (package.version.isNotEmpty) package.version,
-                    package.gui ? 'GUI app' : package.section,
+                    package.gui ? 'GUI uygulaması' : package.section,
                   ].where((e) => e.isNotEmpty).join(' · '),
                   style: DroidTheme.monoSm,
                 ),
@@ -479,7 +479,7 @@ class _AppCatalogScreenState extends State<AppCatalogScreen>
             IconButton(
               onPressed: busy ? null : () => _remove(package),
               icon: const Icon(Icons.delete_outline_rounded),
-              tooltip: 'Remove',
+              tooltip: 'Kaldır',
             )
           else if (installed)
             const Icon(Icons.check_circle_rounded, color: DroidTheme.success)
@@ -495,7 +495,7 @@ class _AppCatalogScreenState extends State<AppCatalogScreen>
                         await _install(package.name);
                       }
                     },
-              child: const Text('Install'),
+              child: const Text('Kur'),
             ),
         ],
       ),
@@ -560,7 +560,7 @@ class _AppCatalogScreenState extends State<AppCatalogScreen>
                         child: CircularProgressIndicator(strokeWidth: 2),
                       )
                     : const Icon(Icons.close_rounded, size: 18),
-                label: Text(_cancelling ? 'Cancelling' : 'Cancel installation'),
+                label: Text(_cancelling ? 'İptal ediliyor' : 'Kurulumu iptal et'),
               ),
             ),
             if (tail.isNotEmpty) ...[
