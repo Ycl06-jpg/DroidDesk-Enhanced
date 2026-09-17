@@ -56,7 +56,7 @@ class _DesktopToolsScreenState extends State<DesktopToolsScreen>
     if (!mounted) return;
     setState(() => _dockBusy = false);
     ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(content: Text(saved ? 'Dock updated' : 'Could not update dock')),
+      SnackBar(content: Text(saved ? 'Dock güncellendi' : 'Dock güncellenemedi')),
     );
   }
 
@@ -72,14 +72,14 @@ class _DesktopToolsScreenState extends State<DesktopToolsScreen>
       await _loadSnapshots();
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Desktop snapshot created')),
+          const SnackBar(content: Text('Masaüstü anlık görüntüsü oluşturuldu')),
         );
       }
     } catch (error) {
       if (mounted) {
         ScaffoldMessenger.of(
           context,
-        ).showSnackBar(SnackBar(content: Text('Snapshot failed: $error')));
+        ).showSnackBar(SnackBar(content: Text('Anlık görüntü oluşturulamadı: $error')));
       }
     } finally {
       if (mounted) setState(() => _snapshotBusy = false);
@@ -90,18 +90,18 @@ class _DesktopToolsScreenState extends State<DesktopToolsScreen>
     final confirmed = await showDialog<bool>(
       context: context,
       builder: (context) => AlertDialog(
-        title: const Text('Restore this snapshot?'),
+        title: const Text('Bu anlık görüntü geri yüklensin mi?'),
         content: const Text(
-          'The Linux session will stop. Current home files and settings will be replaced, and missing packages will be restored.',
+          'Linux oturumu durdurulacak. Mevcut ev dizini dosyaları ve ayarlar değiştirilecek, eksik paketler geri yüklenecek.',
         ),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(context, false),
-            child: const Text('Cancel'),
+            child: const Text('İptal'),
           ),
           FilledButton(
             onPressed: () => Navigator.pop(context, true),
-            child: const Text('Restore'),
+            child: const Text('Geri Yükle'),
           ),
         ],
       ),
@@ -113,7 +113,7 @@ class _DesktopToolsScreenState extends State<DesktopToolsScreen>
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text(restored ? 'Snapshot restored' : 'Restore failed'),
+            content: Text(restored ? 'Anlık görüntü geri yüklendi' : 'Geri yükleme başarısız oldu'),
           ),
         );
       }
@@ -121,7 +121,7 @@ class _DesktopToolsScreenState extends State<DesktopToolsScreen>
       if (mounted) {
         ScaffoldMessenger.of(
           context,
-        ).showSnackBar(SnackBar(content: Text('Restore failed: $error')));
+        ).showSnackBar(SnackBar(content: Text('Geri yükleme başarısız oldu: $error')));
       }
     } finally {
       if (mounted) setState(() => _snapshotBusy = false);
@@ -132,16 +132,16 @@ class _DesktopToolsScreenState extends State<DesktopToolsScreen>
     final confirmed = await showDialog<bool>(
       context: context,
       builder: (context) => AlertDialog(
-        title: const Text('Delete snapshot?'),
+        title: const Text('Anlık görüntü silinsin mi?'),
         content: Text(name),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(context, false),
-            child: const Text('Cancel'),
+            child: const Text('İptal'),
           ),
           TextButton(
             onPressed: () => Navigator.pop(context, true),
-            child: const Text('Delete'),
+            child: const Text('Sil'),
           ),
         ],
       ),
@@ -156,13 +156,13 @@ class _DesktopToolsScreenState extends State<DesktopToolsScreen>
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Desktop Tools'),
+        title: const Text('Masaüstü Araçları'),
         bottom: TabBar(
           controller: _tabs,
           isScrollable: true,
           tabs: const [
             Tab(icon: Icon(Icons.dock_rounded), text: 'Dock'),
-            Tab(icon: Icon(Icons.restore_rounded), text: 'Backups'),
+            Tab(icon: Icon(Icons.restore_rounded), text: 'Yedekler'),
           ],
         ),
       ),
@@ -200,7 +200,7 @@ class _DesktopToolsScreenState extends State<DesktopToolsScreen>
       children: [
         Row(
           children: [
-            Text('PINNED', style: DroidTheme.label),
+            Text('SABİTLENMİŞ', style: DroidTheme.label),
             const Spacer(),
             if (_dockBusy)
               const SizedBox(
@@ -243,14 +243,14 @@ class _DesktopToolsScreenState extends State<DesktopToolsScreen>
           },
         ),
         const SizedBox(height: 20),
-        Text('ADD AN ANDROID APP', style: DroidTheme.label),
+        Text('ANDROID UYGULAMASI EKLE', style: DroidTheme.label),
         const SizedBox(height: 8),
         TextField(
           controller: _dockSearchController,
           onChanged: (_) => setState(() {}),
           decoration: const InputDecoration(
             prefixIcon: Icon(Icons.search),
-            hintText: 'Search installed apps',
+            hintText: 'Kurulu uygulamalarda ara',
           ),
         ),
         const SizedBox(height: 8),
@@ -286,21 +286,21 @@ class _DesktopToolsScreenState extends State<DesktopToolsScreen>
                   child: CircularProgressIndicator(strokeWidth: 2),
                 )
               : const Icon(Icons.add_rounded),
-          label: const Text('Create desktop snapshot'),
+          label: const Text('Masaüstü anlık görüntüsü oluştur'),
         ),
         const SizedBox(height: 12),
         Text(
-          'Backs up your Linux home, desktop settings, wallpaper and installed-package manifest.',
+          'Linux ev dizininizi, masaüstü ayarlarınızı, duvar kağıdınızı ve kurulu paket listesini yedekler.',
           style: DroidTheme.bodySm,
         ),
         const SizedBox(height: 20),
-        Text('SNAPSHOTS', style: DroidTheme.label),
+        Text('ANLIK GÖRÜNTÜLER', style: DroidTheme.label),
         const SizedBox(height: 8),
         if (_snapshots.isEmpty)
           const Card(
             child: Padding(
               padding: EdgeInsets.all(24),
-              child: Center(child: Text('No snapshots yet')),
+              child: Center(child: Text('Henüz anlık görüntü yok')),
             ),
           ),
         ..._snapshots.map((snapshot) {
@@ -319,8 +319,8 @@ class _DesktopToolsScreenState extends State<DesktopToolsScreen>
                     ? _restoreSnapshot(snapshot['name'].toString())
                     : _deleteSnapshot(snapshot['name'].toString()),
                 itemBuilder: (_) => const [
-                  PopupMenuItem(value: 'restore', child: Text('Restore')),
-                  PopupMenuItem(value: 'delete', child: Text('Delete')),
+                  PopupMenuItem(value: 'restore', child: Text('Geri Yükle')),
+                  PopupMenuItem(value: 'delete', child: Text('Sil')),
                 ],
               ),
             ),
