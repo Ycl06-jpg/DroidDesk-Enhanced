@@ -32,8 +32,8 @@ class DistroPickerScreen extends StatelessWidget {
                     IconButton(
                       onPressed: () => state.toggleThemeMode(),
                       tooltip: state.isDarkMode
-                          ? 'Switch to Light Theme'
-                          : 'Switch to Dark Theme',
+                          ? 'Açık Temaya Geç'
+                          : 'Koyu Temaya Geç',
                       icon: Icon(
                         state.isDarkMode
                             ? Icons.light_mode_rounded
@@ -51,14 +51,14 @@ class DistroPickerScreen extends StatelessWidget {
                 ),
                 const SizedBox(height: 32),
 
-                Text('Choose Your Linux', style: DroidTheme.headingXl)
+                Text('Linux Dağıtımını Seç', style: DroidTheme.headingXl)
                     .animate()
                     .fadeIn(duration: 400.ms)
                     .slideX(begin: -0.1, duration: 400.ms),
 
                 const SizedBox(height: 8),
                 Text(
-                  'Select a distribution to install. This will be downloaded on setup.',
+                  'Kurulacak dağıtımı seçin. Kurulum sırasında indirilecektir.',
                   style: DroidTheme.bodyMd,
                 )
                     .animate()
@@ -73,8 +73,8 @@ class DistroPickerScreen extends StatelessWidget {
                       _DistroCard(
                         id: 'ubuntu',
                         name: 'Ubuntu 24.04 LTS',
-                        description: 'Best overall experience. Huge package library, great community support.',
-                        size: '~350 MB download',
+                        description: 'En iyi genel deneyim. Devasa paket kütüphanesi, harika topluluk desteği.',
+                        size: '~350 MB indirme',
                         color: DroidTheme.ubuntuColor,
                         icon: Icons.circle,
                         recommended: true,
@@ -85,8 +85,8 @@ class DistroPickerScreen extends StatelessWidget {
                       _DistroCard(
                         id: 'alpine',
                         name: 'Alpine Linux 3.20',
-                        description: 'Ultra minimal and secure. Best for low resource usage.',
-                        size: '~3 MB download',
+                        description: 'Aşırı minimal ve güvenli. Düşük kaynak kullanımı için en iyisi.',
+                        size: '~3 MB indirme',
                         color: DroidTheme.alpineColor,
                         icon: Icons.diamond_outlined,
                         recommended: false,
@@ -97,8 +97,8 @@ class DistroPickerScreen extends StatelessWidget {
                       _DistroCard(
                         id: 'kali',
                         name: 'Kali Linux',
-                        description: 'Security and pentesting tools. Wireshark, Metasploit, Nmap included.',
-                        size: '~500 MB download',
+                        description: 'Güvenlik ve sızma testi araçları. Wireshark, Metasploit, Nmap dahildir.',
+                        size: '~500 MB indirme',
                         color: DroidTheme.kaliColor,
                         icon: Icons.shield_outlined,
                         recommended: false,
@@ -119,7 +119,7 @@ class DistroPickerScreen extends StatelessWidget {
                     children: [
                       OutlinedButton(
                         onPressed: () => Navigator.pop(context),
-                        child: const Text('Back'),
+                        child: const Text('Geri'),
                       ),
                       const Spacer(),
                       ElevatedButton(
@@ -140,7 +140,7 @@ class DistroPickerScreen extends StatelessWidget {
                         child: const Row(
                           mainAxisSize: MainAxisSize.min,
                           children: [
-                            Text('Next'),
+                            Text('İleri'),
                             SizedBox(width: 4),
                             Icon(Icons.arrow_forward_rounded, size: 18),
                           ],
@@ -262,7 +262,7 @@ class _DistroCard extends StatelessWidget {
                             borderRadius: BorderRadius.circular(6),
                           ),
                           child: Text(
-                            'RECOMMENDED',
+                            'ÖNERİLEN',
                             style: DroidTheme.label.copyWith(
                               color: DroidTheme.accent,
                               fontSize: 9,
