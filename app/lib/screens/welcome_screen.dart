@@ -29,8 +29,8 @@ class WelcomeScreen extends StatelessWidget {
                   child: IconButton(
                     onPressed: () => state.toggleThemeMode(),
                     tooltip: state.isDarkMode
-                        ? 'Switch to Light Theme'
-                        : 'Switch to Dark Theme',
+                        ? 'Açık Temaya Geç'
+                        : 'Koyu Temaya Geç',
                     icon: Icon(
                       state.isDarkMode
                           ? Icons.light_mode_rounded
@@ -93,7 +93,7 @@ class WelcomeScreen extends StatelessWidget {
 
                 // ── Tagline ──
                 Text(
-                      'Full Linux Desktop on Android',
+                      'Android\'de Tam Linux Masaüstü',
                       style: DroidTheme.bodyLg.copyWith(
                         color: DroidTheme.textSecondary,
                       ),
@@ -109,7 +109,7 @@ class WelcomeScreen extends StatelessWidget {
                 const SizedBox(height: 8),
 
                 Text(
-                  'Ubuntu · XFCE Desktop · Single App',
+                  'Ubuntu · XFCE Masaüstü · Tek Uygulama',
                   style: DroidTheme.bodySm.copyWith(
                     color: DroidTheme.secondary,
                     fontWeight: FontWeight.w500,
@@ -128,19 +128,19 @@ class WelcomeScreen extends StatelessWidget {
                       [
                             _featureChip(
                               Icons.storage_rounded,
-                              'Containerized',
+                              'Konteynerli',
                             ),
                             _featureChip(
                               Icons.security_rounded,
-                              'Root Optional',
+                              'Root Gerektirmez',
                             ),
                             _featureChip(
                               Icons.desktop_mac_rounded,
-                              'Linux Desktop',
+                              'Linux Masaüstü',
                             ),
                             _featureChip(
                               Icons.offline_bolt_rounded,
-                              'Local Execution',
+                              'Yerel Çalıştırma',
                             ),
                           ]
                           .animate(interval: 100.ms)
@@ -202,7 +202,7 @@ class WelcomeScreen extends StatelessWidget {
                           mainAxisAlignment: MainAxisAlignment.center,
                           children: [
                             Text(
-                              'Set Up Desktop Essentials',
+                              'Masaüstü Temellerini Kur',
                               style: DroidTheme.headingSm.copyWith(
                                 color: Colors.white,
                               ),
