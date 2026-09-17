@@ -43,18 +43,18 @@ class _SetupProgressScreenState extends State<SetupProgressScreen> {
                 color: DroidTheme.warning,
                 size: 38,
               ),
-              title: const Text('Low storage'),
+              title: const Text('Depolama Alanı Az'),
               content: Text(
-                'Only $freeStorage MB is available. Desktop Essentials works best with at least 2 GB free. You can continue, but package installation may fail.',
+                'Yalnızca $freeStorage MB kullanılabilir. Masaüstü Temelleri en iyi en az 2 GB boş alanla çalışır. Devam edebilirsiniz, ancak paket kurulumu başarısız olabilir.',
               ),
               actions: [
                 TextButton(
                   onPressed: () => Navigator.pop(dialogContext, false),
-                  child: const Text('Go back'),
+                  child: const Text('Geri dön'),
                 ),
                 ElevatedButton(
                   onPressed: () => Navigator.pop(dialogContext, true),
-                  child: const Text('Continue anyway'),
+                  child: const Text('Yine de devam et'),
                 ),
               ],
             ),
@@ -82,19 +82,19 @@ class _SetupProgressScreenState extends State<SetupProgressScreen> {
                 color: DroidTheme.accent,
                 size: 38,
               ),
-              title: const Text('Root access detected'),
+              title: const Text('Root erişimi tespit edildi'),
               content: const Text(
-                'Your device is rooted. Continue with the rooted chroot '
-                'runtime for the best performance and full Linux support?',
+                'Cihazınız root\'lu. En iyi performans ve tam Linux desteği için '
+                'root\'lu chroot çalışma zamanıyla devam edilsin mi?',
               ),
               actions: [
                 TextButton(
                   onPressed: () => Navigator.pop(dialogContext, false),
-                  child: const Text('Cancel'),
+                  child: const Text('İptal'),
                 ),
                 ElevatedButton(
                   onPressed: () => Navigator.pop(dialogContext, true),
-                  child: const Text('Continue with root'),
+                  child: const Text('Root ile devam et'),
                 ),
               ],
             ),
@@ -134,8 +134,8 @@ class _SetupProgressScreenState extends State<SetupProgressScreen> {
                   child: IconButton(
                     onPressed: () => state.toggleThemeMode(),
                     tooltip: state.isDarkMode
-                        ? 'Switch to Light Theme'
-                        : 'Switch to Dark Theme',
+                        ? 'Açık Temaya Geç'
+                        : 'Koyu Temaya Geç',
                     icon: Icon(
                       state.isDarkMode
                           ? Icons.light_mode_rounded
@@ -241,7 +241,7 @@ class _SetupProgressScreenState extends State<SetupProgressScreen> {
                           borderRadius: BorderRadius.circular(14),
                         ),
                       ),
-                      child: const Text('Retry'),
+                      child: const Text('Tekrar Dene'),
                     ),
                   ),
                 ] else if (phase.complete) ...[
@@ -266,7 +266,7 @@ class _SetupProgressScreenState extends State<SetupProgressScreen> {
                           child: const Row(
                             mainAxisAlignment: MainAxisAlignment.center,
                             children: [
-                              Text('Launch DroidDesk'),
+                              Text('DroidDesk\'i Başlat'),
                               SizedBox(width: 8),
                               Icon(Icons.rocket_launch_rounded, size: 20),
                             ],
@@ -297,23 +297,23 @@ class _SetupProgressScreenState extends State<SetupProgressScreen> {
       final progress = state.extractProgress;
       return _checklistColumn([
         _ChecklistItem(
-          label: 'Bootstrap environment',
+          label: 'Ortam hazırlanıyor',
           done: progress >= 0.08,
           active: progress < 0.08,
           progress: progress < 0.08 ? progress / 0.08 : null,
         ),
         _ChecklistItem(
-          label: 'Configure package repositories',
+          label: 'Paket depoları yapılandırılıyor',
           done: progress >= 0.24,
           active: progress >= 0.08 && progress < 0.24,
         ),
         _ChecklistItem(
-          label: 'Install Desktop Essentials',
+          label: 'Masaüstü Temelleri kuruluyor',
           done: progress >= 0.70,
           active: progress >= 0.24 && progress < 0.70,
         ),
         _ChecklistItem(
-          label: 'Finalize Desktop Essentials',
+          label: 'Masaüstü Temelleri tamamlanıyor',
           done: state.isSetupComplete,
           active: progress >= 0.70 && !state.isSetupComplete,
         ),
@@ -322,26 +322,26 @@ class _SetupProgressScreenState extends State<SetupProgressScreen> {
 
     final steps = [
       _ChecklistItem(
-        label: isChroot ? 'Root access confirmed' : 'Bootstrap environment',
+        label: isChroot ? 'Root erişimi onaylandı' : 'Ortam hazırlanıyor',
         done:
             state.hasRoot ||
             (!state.isDownloading && state.downloadProgress == 0),
         active: false,
       ),
       _ChecklistItem(
-        label: isChroot ? 'Download Ubuntu rootfs' : 'Install native packages',
+        label: isChroot ? 'Ubuntu kök dosya sistemi indiriliyor' : 'Yerel paketler kuruluyor',
         done: state.downloadProgress >= 1.0,
         active: state.isDownloading,
         progress: state.isDownloading ? state.downloadProgress : null,
       ),
       _ChecklistItem(
-        label: isChroot ? 'Extract rootfs' : 'Configure desktop',
+        label: isChroot ? 'Kök dosya sistemi çıkarılıyor' : 'Masaüstü yapılandırılıyor',
         done: state.extractProgress >= 1.0,
         active: state.isExtracting,
         progress: state.isExtracting ? state.extractProgress : null,
       ),
       _ChecklistItem(
-        label: 'Configure Linux',
+        label: 'Linux yapılandırılıyor',
         done: state.isSetupComplete,
         active: state.extractProgress >= 1.0 && !state.isSetupComplete,
       ),
@@ -444,7 +444,7 @@ class _SetupProgressScreenState extends State<SetupProgressScreen> {
   _PhaseInfo _getPhase(AppState state) {
     if (state.errorMessage != null) {
       return _PhaseInfo(
-        title: 'Setup Failed',
+        title: 'Kurulum Başarısız',
         message: state.errorMessage!,
         progress: 0,
         icon: Icons.error_outline_rounded,
@@ -455,10 +455,10 @@ class _SetupProgressScreenState extends State<SetupProgressScreen> {
 
     if (state.isDownloading) {
       return _PhaseInfo(
-        title: 'Downloading',
+        title: 'İndiriliyor',
         message: state.downloadStatus.isNotEmpty
             ? state.downloadStatus
-            : 'Preparing download...',
+            : 'İndirme hazırlanıyor...',
         progress: state.downloadProgress * 0.5, // 0–50% of total
         icon: Icons.cloud_download_rounded,
         error: false,
@@ -470,11 +470,11 @@ class _SetupProgressScreenState extends State<SetupProgressScreen> {
       if (!state.hasRoot) {
         return _PhaseInfo(
           title: state.extractProgress < 0.08
-              ? 'Preparing Runtime'
-              : 'Installing Native Linux',
+              ? 'Çalışma Zamanı Hazırlanıyor'
+              : 'Yerel Linux Kuruluyor',
           message: state.extractStatus.isNotEmpty
               ? state.extractStatus
-              : 'Preparing native Termux environment...',
+              : 'Yerel Termux ortamı hazırlanıyor...',
           progress: state.extractProgress,
           icon: state.extractProgress < 0.08
               ? Icons.inventory_2_rounded
@@ -484,10 +484,10 @@ class _SetupProgressScreenState extends State<SetupProgressScreen> {
         );
       }
       return _PhaseInfo(
-        title: state.isInstallingDE ? 'Installing Desktop' : 'Extracting',
+        title: state.isInstallingDE ? 'Masaüstü Kuruluyor' : 'Çıkarılıyor',
         message: state.extractStatus.isNotEmpty
             ? state.extractStatus
-            : 'Extracting filesystem...',
+            : 'Dosya sistemi çıkarılıyor...',
         progress: 0.5 + state.extractProgress * 0.4, // 50–90% of total
         icon: state.isInstallingDE
             ? Icons.desktop_windows_rounded
@@ -499,8 +499,8 @@ class _SetupProgressScreenState extends State<SetupProgressScreen> {
 
     if (state.isSetupComplete) {
       return _PhaseInfo(
-        title: 'Setup Complete!',
-        message: 'Your Linux desktop is ready to launch.',
+        title: 'Kurulum Tamamlandı!',
+        message: 'Linux masaüstünüz başlatılmaya hazır.',
         progress: 1.0,
         icon: Icons.check_circle_rounded,
         error: false,
@@ -510,8 +510,8 @@ class _SetupProgressScreenState extends State<SetupProgressScreen> {
 
     // Default: not started yet
     return _PhaseInfo(
-      title: 'Setting Up',
-      message: 'Initializing...',
+      title: 'Kuruluyor',
+      message: 'Başlatılıyor...',
       progress: 0,
       icon: Icons.settings_rounded,
       error: false,
