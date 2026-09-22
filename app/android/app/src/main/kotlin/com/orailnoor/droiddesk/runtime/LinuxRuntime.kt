@@ -1039,7 +1039,8 @@ class LinuxRuntime(private val context: Context) {
         env["SHELL"] = File(binDir, "bash").absolutePath
         env["TERM"] = "xterm-256color"
         env["COLORTERM"] = "truecolor"
-        env["LANG"] = "en_US.UTF-8"
+        env["LANG"] = "tr_TR.UTF-8"
+        env["LANGUAGE"] = "tr_TR:tr"
 
         env["DISPLAY"] = ":0"
         env["XDG_RUNTIME_DIR"] = tmpDir.absolutePath
