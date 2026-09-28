@@ -1,10 +1,19 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:droiddesk/services/platform_bridge.dart';
 import 'package:droiddesk/theme/droid_theme.dart';
 
 /// Central state management for the entire DroidDesk app.
 class AppState extends ChangeNotifier {
+  /// Hata nesnelerini kullanıcıya gösterilecek sade metne çevirir
+  /// ("Bad state: ..." veya "PlatformException(...)" önekleri olmadan).
+  static String _hataMetni(Object e) {
+    if (e is StateError) return e.message;
+    if (e is PlatformException) return e.message ?? e.code;
+    return e.toString();
+  }
+
   // ── Theme State ──
   ThemeMode _themeMode = ThemeMode.dark;
 
@@ -37,7 +46,7 @@ class AppState extends ChangeNotifier {
 
   // Terminal history
   final List<String> _terminalOutput = [
-    'DroidDesk Linux Terminal\nType commands below.\n',
+    'DroidDesk Linux Terminali\nKomutları aşağıya yazın.\n',
   ];
   List<String> get terminalOutput => _terminalOutput;
 
@@ -84,7 +93,7 @@ class AppState extends ChangeNotifier {
     if (vendor.contains('adreno')) return 'Adreno (Snapdragon)';
     if (vendor.contains('mali')) return 'Mali (MediaTek/Exynos)';
     if (vendor.contains('powervr')) return 'PowerVR';
-    return 'Unknown GPU';
+    return 'Bilinmeyen GPU';
   }
 
   // ── Initialization ──
@@ -230,7 +239,7 @@ class AppState extends ChangeNotifier {
 
       notifyListeners();
     } catch (e) {
-      _errorMessage = 'Failed to get runtime status: $e';
+      _errorMessage = 'Çalışma ortamı durumu alınamadı: ${_hataMetni(e)}';
       notifyListeners();
     }
   }
@@ -291,7 +300,7 @@ class AppState extends ChangeNotifier {
       _setupStep = 4;
       notifyListeners();
     } catch (e) {
-      _errorMessage = 'Setup failed: $e';
+      _errorMessage = 'Kurulum başarısız oldu: ${_hataMetni(e)}';
       _isDownloading = false;
       _isExtracting = false;
       _isInstallingDE = false;
@@ -302,13 +311,13 @@ class AppState extends ChangeNotifier {
   Future<void> _runNativeSetup() async {
     _isExtracting = true;
     _extractProgress = 0.0;
-    _extractStatus = 'Extracting native Termux bootstrap...';
+    _extractStatus = 'Yerel Termux önyükleme paketi çıkarılıyor...';
     _statusMessage = _extractStatus;
     notifyListeners();
     await DroidDeskPlatform.setupBootstrap();
 
     _extractProgress = 0.08;
-    _extractStatus = 'Bootstrap environment ready';
+    _extractStatus = 'Temel ortam hazır';
     _statusMessage = _extractStatus;
     _isInstallingDE = true;
     notifyListeners();
@@ -316,7 +325,7 @@ class AppState extends ChangeNotifier {
       de: _selectedDE,
     );
     if (!installed) {
-      throw StateError('Native Termux package installation failed');
+      throw StateError('Yerel Termux paketleri kurulamadı');
     }
     _isExtracting = false;
     _isInstallingDE = false;
@@ -325,31 +334,31 @@ class AppState extends ChangeNotifier {
   }
 
   Future<void> _runChrootSetup() async {
-    _statusMessage = 'Downloading Ubuntu rootfs...';
+    _statusMessage = 'Ubuntu rootfs indiriliyor...';
     _isDownloading = true;
     _downloadProgress = 0.0;
     notifyListeners();
     if (!await DroidDeskPlatform.downloadRootfs(_selectedDistro)) {
       throw StateError(
-        'Ubuntu download failed. Check your connection and retry.',
+        'Ubuntu indirilemedi. Bağlantınızı kontrol edip tekrar deneyin.',
       );
     }
 
     _isDownloading = false;
     _isExtracting = true;
     _extractProgress = 0.0;
-    _statusMessage = 'Extracting rootfs...';
+    _statusMessage = 'Rootfs çıkarılıyor...';
     notifyListeners();
     if (!await DroidDeskPlatform.extractRootfs()) {
-      throw StateError('Ubuntu filesystem extraction failed');
+      throw StateError('Ubuntu dosya sistemi çıkarılamadı');
     }
 
     _statusMessage =
-        'Installing desktop environment (this may take a while)...';
+        'Masaüstü ortamı kuruluyor (bu biraz zaman alabilir)...';
     _isInstallingDE = true;
     notifyListeners();
     if (!await DroidDeskPlatform.installDesktopEnvironment(_selectedDE)) {
-      throw StateError('Desktop Essentials package installation failed');
+      throw StateError('Temel Masaüstü Paketleri kurulamadı');
     }
     _isExtracting = false;
     _isInstallingDE = false;
@@ -361,7 +370,7 @@ class AppState extends ChangeNotifier {
     // Handled inside runSetup for chroot mode.
     // Kept for API compatibility.
     _extractProgress = 1.0;
-    _extractStatus = 'Extraction handled by setup flow';
+    _extractStatus = 'Çıkarma işlemi kurulum akışında tamamlandı';
     notifyListeners();
   }
 
@@ -369,20 +378,20 @@ class AppState extends ChangeNotifier {
     try {
       _isExtracting = true;
       _extractProgress = 0.0;
-      _statusMessage = 'Installing Desktop Environment...';
+      _statusMessage = 'Masaüstü Ortamı Kuruluyor...';
       _errorMessage = null;
       notifyListeners();
 
       if (_hasRoot) {
         if (!await DroidDeskPlatform.installDesktopEnvironment(_selectedDE)) {
-          throw StateError('Desktop Essentials package installation failed');
+          throw StateError('Temel Masaüstü Paketleri kurulamadı');
         }
       } else {
         final installed = await DroidDeskPlatform.installDesktopNative(
           de: _selectedDE,
         );
         if (!installed) {
-          throw StateError('Native Termux package installation failed');
+          throw StateError('Yerel Termux paketleri kurulamadı');
         }
       }
 
@@ -390,7 +399,7 @@ class AppState extends ChangeNotifier {
       _isInstallingDE = false;
       await refreshStatus();
     } catch (e) {
-      _errorMessage = 'Installation failed: $e';
+      _errorMessage = 'Kurulum başarısız oldu: ${_hataMetni(e)}';
       _isExtracting = false;
       _isInstallingDE = false;
       notifyListeners();
@@ -412,7 +421,7 @@ class AppState extends ChangeNotifier {
     if (_installingOptionalApp != null) return false;
     _installingOptionalApp = appId;
     _optionalInstallProgress = 0.0;
-    _optionalInstallStatus = 'Preparing installation...';
+    _optionalInstallStatus = 'Kurulum hazırlanıyor...';
     _optionalInstallLog = '';
     notifyListeners();
 
@@ -442,12 +451,12 @@ class AppState extends ChangeNotifier {
         height: height,
       );
       if (!started) {
-        throw StateError('Linux runtime is not ready');
+        throw StateError('Linux çalışma ortamı hazır değil');
       }
       _isRunning = true;
       notifyListeners();
     } catch (e) {
-      _errorMessage = 'Failed to start: $e';
+      _errorMessage = 'Başlatılamadı: ${_hataMetni(e)}';
       notifyListeners();
     }
   }
@@ -456,7 +465,7 @@ class AppState extends ChangeNotifier {
     try {
       await DroidDeskPlatform.launchDesktopActivity();
     } catch (e) {
-      _errorMessage = 'Failed to launch desktop activity: $e';
+      _errorMessage = 'Masaüstü ekranı açılamadı: ${_hataMetni(e)}';
       notifyListeners();
     }
   }
@@ -467,7 +476,7 @@ class AppState extends ChangeNotifier {
       _isRunning = false;
       notifyListeners();
     } catch (e) {
-      _errorMessage = 'Failed to stop: $e';
+      _errorMessage = 'Durdurulamadı: ${_hataMetni(e)}';
       notifyListeners();
     }
   }
@@ -478,7 +487,7 @@ class AppState extends ChangeNotifier {
       notifyListeners();
       return await DroidDeskPlatform.executeCommand(command);
     } catch (e) {
-      return "Error executing command: $e";
+      return "Komut çalıştırılırken hata oluştu: ${_hataMetni(e)}";
     }
   }
 
@@ -501,7 +510,7 @@ class AppState extends ChangeNotifier {
 
   void clearTerminal() {
     _terminalOutput.clear();
-    _terminalOutput.add('DroidDesk Linux Terminal\nType commands below.\n');
+    _terminalOutput.add('DroidDesk Linux Terminali\nKomutları aşağıya yazın.\n');
     notifyListeners();
   }
 

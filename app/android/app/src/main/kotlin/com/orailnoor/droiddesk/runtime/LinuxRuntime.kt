@@ -140,7 +140,7 @@ class LinuxRuntime(private val context: Context) {
         return if (hasAdrenoGpu() && freedrenoIcd.exists()) {
             "Turnip + Zink"
         } else {
-            "Software (llvmpipe)"
+            "Yazılımsal (llvmpipe)"
         }
     }
 
@@ -250,6 +250,56 @@ class LinuxRuntime(private val context: Context) {
         // Legacy proot-distro releases
         File(prefixDir, "var/lib/proot-distro/installed-rootfs/debian/etc/os-release"),
     )
+
+    /**
+     * Debian konteynerinde main dışındaki tüm depo bileşenlerini
+     * (contrib, non-free, non-free-firmware) etkinleştirir. Dosyalar doğrudan
+     * düzenlenir; PRoot başlatılmaz. Hata kurulumu durdurmaz.
+     */
+    private fun enableAllDebianComponents() {
+        val allComponents = listOf("main", "contrib", "non-free", "non-free-firmware")
+        val rootfsDirs = listOf(
+            File(prefixDir, "var/lib/proot-distro/containers/debian/rootfs"),
+            File(prefixDir, "var/lib/proot-distro/installed-rootfs/debian"),
+        ).filter { it.isDirectory }
+        for (rootfs in rootfsDirs) {
+            try {
+                // deb822 biçimi (Debian 12+): "Components: main" satırları
+                val sourcesDir = File(rootfs, "etc/apt/sources.list.d")
+                sourcesDir.listFiles { f -> f.name.endsWith(".sources") }?.forEach { file ->
+                    val updated = file.readLines().joinToString("\n") { line ->
+                        if (line.trimStart().startsWith("Components:")) {
+                            val existing = line.substringAfter("Components:").trim()
+                                .split(Regex("\\s+")).filter { it.isNotEmpty() }
+                            "Components: " + (existing + allComponents).distinct().joinToString(" ")
+                        } else line
+                    } + "\n"
+                    file.writeText(updated)
+                }
+                // Klasik biçim: "deb <url> <suite> main" satırları
+                val listFile = File(rootfs, "etc/apt/sources.list")
+                if (listFile.isFile) {
+                    val updated = listFile.readLines().joinToString("\n") { line ->
+                        val t = line.trim()
+                        if ((t.startsWith("deb ") || t.startsWith("deb-src ")) && !t.startsWith("#")) {
+                            val parts = t.split(Regex("\\s+"))
+                            // deb [seçenekler] url suite bileşen...
+                            val optEnd = if (parts.size > 1 && parts[1].startsWith("[")) {
+                                parts.indexOfFirst { it.endsWith("]") }
+                            } else 0
+                            val head = parts.take(optEnd + 3)
+                            val comps = parts.drop(optEnd + 3)
+                            if (optEnd < 0 || comps.isEmpty()) line
+                            else (head + (comps + allComponents).distinct()).joinToString(" ")
+                        } else line
+                    } + "\n"
+                    listFile.writeText(updated)
+                }
+            } catch (error: Exception) {
+                Log.w(TAG, "Could not enable all Debian components in ${rootfs.absolutePath}", error)
+            }
+        }
+    }
 
     // ── Bootstrap ──
 
@@ -1089,11 +1139,35 @@ class LinuxRuntime(private val context: Context) {
 
     // ── Native Package Installation ──
 
+    /**
+     * Termux'un tüm resmi depolarını etkinleştirir.
+     *
+     * - main      : önyükleme paketiyle zaten gelir
+     * - x11-repo  : grafik/masaüstü paketleri (zorunlu)
+     * - tur-repo  : Termux User Repository (zorunlu)
+     * - root-repo : root gerektiren araçlar (isteğe bağlı)
+     * - glibc-repo: glibc tabanlı paketler (isteğe bağlı)
+     *
+     * İsteğe bağlı depolardan biri kurulamazsa masaüstü kurulumu durdurulmaz,
+     * yalnızca günlüğe uyarı yazılır.
+     */
     private fun installRepoPackages(): Boolean {
-        val pkgs = listOf("x11-repo", "tur-repo")
+        if (!installRepoPackageSet(listOf("x11-repo", "tur-repo"), refreshMainFirst = true)) {
+            return false
+        }
+        for (extraRepo in listOf("root-repo", "glibc-repo")) {
+            if (!isDpkgPackageInstalled(extraRepo) &&
+                !installRepoPackageSet(listOf(extraRepo), refreshMainFirst = false)
+            ) {
+                Log.w(TAG, "Optional repository $extraRepo could not be enabled; continuing")
+            }
+        }
+        return true
+    }
 
+    private fun installRepoPackageSet(pkgs: List<String>, refreshMainFirst: Boolean): Boolean {
         // Ensure main package list is up to date before downloading the repo packages.
-        if (executeCommand("apt-get update").startsWith("Error:")) {
+        if (refreshMainFirst && executeCommand("apt-get update").startsWith("Error:")) {
             Log.e(TAG, "apt-get update failed before installing repo packages")
             return false
         }
@@ -1101,14 +1175,14 @@ class LinuxRuntime(private val context: Context) {
         // Download the .debs to the prefix root.
         val downloadCmd = "cd \"${prefixDir.absolutePath}\" && apt-get download ${pkgs.joinToString(" ")}"
         if (executeCommand(downloadCmd).startsWith("Error:")) {
-            Log.e(TAG, "Failed to download x11-repo/tur-repo .debs")
+            Log.e(TAG, "Failed to download ${pkgs.joinToString("/")} .debs")
             return false
         }
 
         // Unpack without configuring so we can edit the maintainer scripts first.
         val debs = pkgs.joinToString(" ") { "${it}_*.deb" }
         if (executeCommand("dpkg --unpack $debs").startsWith("Error:")) {
-            Log.e(TAG, "Failed to unpack x11-repo/tur-repo .debs")
+            Log.e(TAG, "Failed to unpack ${pkgs.joinToString("/")} .debs")
             return false
         }
 
@@ -1122,7 +1196,7 @@ class LinuxRuntime(private val context: Context) {
 
         // Now configure the repo packages and refresh apt's package lists.
         if (executeCommand("dpkg --configure ${pkgs.joinToString(" ")}").startsWith("Error:")) {
-            Log.e(TAG, "Failed to configure x11-repo/tur-repo")
+            Log.e(TAG, "Failed to configure ${pkgs.joinToString("/")}")
             return false
         }
         if (executeCommand("pkg update -y").startsWith("Error:")) {
@@ -1237,7 +1311,7 @@ class LinuxRuntime(private val context: Context) {
         if (installAndRecover()) return true
         if (packageOperationCancelled) return false
 
-        onProgress?.invoke(retryProgress, "Refreshing package repositories and retrying...")
+        onProgress?.invoke(retryProgress, "Paket depoları yenileniyor ve yeniden deneniyor...")
         // apt may update main/X11 successfully while a third-party repository is
         // temporarily inconsistent. Retrying is still useful with those newly
         // refreshed lists and apt's last verified TUR index.
@@ -1306,7 +1380,7 @@ class LinuxRuntime(private val context: Context) {
     private fun installMinimalDebian(
         onProgress: ((Double, String) -> Unit)? = null,
     ): Boolean {
-        onProgress?.invoke(0.12, "Installing lightweight PRoot runtime...")
+        onProgress?.invoke(0.12, "Hafif PRoot çalışma ortamı kuruluyor...")
         if (!installOptionalPackages(listOf("proot", "proot-distro"), onProgress, 0.28)) {
             return false
         }
@@ -1322,19 +1396,22 @@ class LinuxRuntime(private val context: Context) {
             // Remove an interrupted extraction so proot-distro can safely retry.
             File(prefixDir, "var/lib/proot-distro/containers/debian").deleteRecursively()
             File(prefixDir, "var/lib/proot-distro/installed-rootfs/debian").deleteRecursively()
-            onProgress?.invoke(0.38, "Downloading minimal Debian base system...")
+            onProgress?.invoke(0.38, "Minimal Debian temel sistemi indiriliyor...")
             if (executeCommand("proot-distro install debian").startsWith("Error:")) {
                 Log.e(TAG, "Minimal Debian rootfs installation failed")
                 return false
             }
         }
 
-        onProgress?.invoke(0.9, "Creating Debian shell shortcut...")
+        onProgress?.invoke(0.85, "Tüm Debian depo bileşenleri etkinleştiriliyor...")
+        enableAllDebianComponents()
+
+        onProgress?.invoke(0.9, "Debian kabuğu kısayolu oluşturuluyor...")
         writeDebianLauncher()
 
         // The downloaded archive is not needed after extraction.
         clearProotDownloadCache()
-        onProgress?.invoke(1.0, "Minimal Debian compatibility is ready")
+        onProgress?.invoke(1.0, "Minimal Debian uyumluluğu hazır")
         return isMinimalDebianInstalled()
     }
 
@@ -1346,7 +1423,7 @@ class LinuxRuntime(private val context: Context) {
         val marker = File(prefixDir, DE_MARKER)
 
         if (getInstalledDE() == selectedDesktop) {
-            onProgress?.invoke(1.0, "$selectedDesktop is already installed")
+            onProgress?.invoke(1.0, "$selectedDesktop zaten kurulu")
             Log.i(TAG, "$selectedDesktop desktop environment already installed")
             return true
         }
@@ -1359,7 +1436,7 @@ class LinuxRuntime(private val context: Context) {
         patchShebangs()
         patchElfRunpaths(prefixDir)
         compileSocketHook()
-        onProgress?.invoke(0.12, "Configuring X11 and TUR repositories...")
+        onProgress?.invoke(0.12, "Tüm Termux depoları yapılandırılıyor (X11, TUR, root, glibc)...")
 
         // Install the x11/tur repository packages. Their postinst scripts run
         // `apt update`, which triggers SIGSYS under the app's seccomp filter, so we
@@ -1369,7 +1446,7 @@ class LinuxRuntime(private val context: Context) {
             Log.e(TAG, "Failed to install x11-repo/tur-repo")
             return false
         }
-        onProgress?.invoke(0.24, "Updating native package database...")
+        onProgress?.invoke(0.24, "Yerel paket veritabanı güncelleniyor...")
 
         // Finish configuring anything left over from a previous run, then install
         // the desktop, GPU drivers, and build tools. Each install is followed by a
@@ -1382,14 +1459,14 @@ class LinuxRuntime(private val context: Context) {
             Log.e(TAG, "pkg update failed")
             return false
         }
-        onProgress?.invoke(0.34, "Installing X11 and audio packages...")
+        onProgress?.invoke(0.34, "X11 ve ses paketleri kuruluyor...")
         // DroidDesk embeds the X server, so termux-x11-nightly is deliberately
         // not installed. All desktops connect to the service's DISPLAY=:0.
         if (!installPackageGroup("pkg install -y xorg-xrandr pulseaudio xclip")) {
             Log.e(TAG, "Native X11 runtime package install failed")
             return false
         }
-        onProgress?.invoke(0.46, "Installing $selectedDesktop desktop packages...")
+        onProgress?.invoke(0.46, "$selectedDesktop masaüstü paketleri kuruluyor...")
 
         val desktopPackages = when (selectedDesktop) {
             "lxqt" -> "lxqt qterminal pcmanfm-qt featherpad"
@@ -1401,7 +1478,7 @@ class LinuxRuntime(private val context: Context) {
             Log.e(TAG, "$selectedDesktop package install failed")
             return false
         }
-        onProgress?.invoke(0.70, "Installing Mesa graphics packages...")
+        onProgress?.invoke(0.70, "Mesa grafik paketleri kuruluyor...")
 
         // mesa-zink pulls the Vulkan loader selected by the active Termux repo.
         // Current repositories use vulkan-loader-generic, which provides and
@@ -1417,26 +1494,26 @@ class LinuxRuntime(private val context: Context) {
         // Turnip/Freedreno is the hardware path for Qualcomm Adreno. Do not
         // install or force that ICD on Mali/PowerVR devices.
         if (hasAdrenoGpu()) {
-            onProgress?.invoke(0.78, "Installing Adreno hardware acceleration...")
+            onProgress?.invoke(0.78, "Adreno donanım hızlandırması kuruluyor...")
             installPackageGroup("pkg install -y mesa-vulkan-icd-freedreno")
         }
 
         val nativeTools = "git wget curl openssh htop python clang"
         onProgress?.invoke(
             0.84,
-            "Installing Desktop Essentials tools...",
+            "Temel Masaüstü araçları kuruluyor...",
         )
         if (!installPackageGroup("pkg install -y $nativeTools")) {
             Log.e(TAG, "Native Termux utility package install failed")
             return false
         }
-        onProgress?.invoke(0.94, "Finalizing native Linux environment...")
+        onProgress?.invoke(0.94, "Yerel Linux ortamı son haline getiriliyor...")
 
         // Rebuild the hook with the installed clang, then persist the selected DE.
         compileSocketHook()
         patchEmbeddedXfcePaths()
         marker.writeText(selectedDesktop)
-        onProgress?.invoke(1.0, "Native Linux setup complete")
+        onProgress?.invoke(1.0, "Yerel Linux kurulumu tamamlandı")
         Log.i(TAG, "Native Termux $selectedDesktop installation complete")
         return true
     }
@@ -1447,7 +1524,7 @@ class LinuxRuntime(private val context: Context) {
     ): Boolean {
         if (getInstalledDE().isEmpty()) return false
         if (getOptionalAppsStatus()[appId] == true) {
-            onProgress?.invoke(1.0, "Already installed")
+            onProgress?.invoke(1.0, "Zaten kurulu")
             return true
         }
 
@@ -1455,31 +1532,31 @@ class LinuxRuntime(private val context: Context) {
         // original Termux preinst path is invalid in our relocated prefix.
         // Repair/install Node before the generic dpkg configure pass.
         if (appId == "nodejs" || appId == "code_oss") {
-            onProgress?.invoke(0.08, "Preparing relocated Node.js dependency...")
+            onProgress?.invoke(0.08, "Node.js bağımlılığı hazırlanıyor...")
             if (!isDpkgPackageInstalled("nodejs") && !installRelocatedNodejs()) return false
         }
 
-        onProgress?.invoke(0.18, "Repairing interrupted packages...")
+        onProgress?.invoke(0.18, "Yarım kalan paketler onarılıyor...")
         if (!installPackageGroup("dpkg --configure -a")) return false
 
         val ok = when (appId) {
             "firefox" -> {
-                onProgress?.invoke(0.25, "Installing Firefox...")
+                onProgress?.invoke(0.25, "Firefox kuruluyor...")
                 installOptionalPackages(listOf("firefox"), onProgress, 0.55)
             }
             "code_oss" -> {
-                onProgress?.invoke(0.45, "Installing npm dependency...")
+                onProgress?.invoke(0.45, "npm bağımlılığı kuruluyor...")
                 installOptionalPackages(listOf("npm"), onProgress, 0.55) && run {
-                    onProgress?.invoke(0.65, "Installing Code OSS...")
+                    onProgress?.invoke(0.65, "Code OSS kuruluyor...")
                     installOptionalPackages(listOf("code-oss"), onProgress, 0.78)
                 }
             }
             "nodejs" -> {
-                onProgress?.invoke(0.65, "Installing npm...")
+                onProgress?.invoke(0.65, "npm kuruluyor...")
                 installOptionalPackages(listOf("npm"), onProgress, 0.78)
             }
             "imagemagick" -> {
-                onProgress?.invoke(0.25, "Installing ImageMagick...")
+                onProgress?.invoke(0.25, "ImageMagick kuruluyor...")
                 installOptionalPackages(listOf("imagemagick"), onProgress, 0.55)
             }
             "proot_debian" -> installMinimalDebian(onProgress)
@@ -1489,9 +1566,9 @@ class LinuxRuntime(private val context: Context) {
         val verified = ok && getOptionalAppsStatus()[appId] == true
         if (verified) {
             patchShebangs(force = true)
-            onProgress?.invoke(1.0, "Installation complete")
+            onProgress?.invoke(1.0, "Kurulum tamamlandı")
         } else {
-            onProgress?.invoke(-1.0, "Installation failed. Review the package log and retry.")
+            onProgress?.invoke(-1.0, "Kurulum başarısız oldu. Paket günlüğünü inceleyip tekrar deneyin.")
         }
         return verified
     }
@@ -1540,16 +1617,16 @@ class LinuxRuntime(private val context: Context) {
         onProgress: (Double, String) -> Unit,
     ): Boolean {
         if (!isSafePackageName(packageName)) {
-            onProgress(-1.0, "Invalid package name")
+            onProgress(-1.0, "Geçersiz paket adı")
             return false
         }
-        onProgress(0.08, "Repairing interrupted package operations...")
+        onProgress(0.08, "Yarım kalan paket işlemleri onarılıyor...")
         installPackageGroup("dpkg --configure -a")
         if (packageOperationCancelled) {
-            onProgress(-1.0, "Installation cancelled")
+            onProgress(-1.0, "Kurulum iptal edildi")
             return false
         }
-        onProgress(0.22, "Installing $packageName and dependencies...")
+        onProgress(0.22, "$packageName ve bağımlılıkları kuruluyor...")
         val optionalId = when (packageName) {
             "firefox" -> "firefox"
             "code-oss", "code" -> "code_oss"
@@ -1565,14 +1642,14 @@ class LinuxRuntime(private val context: Context) {
             installOptionalPackages(listOf(packageName), onProgress, 0.5)
         }
         if (packageOperationCancelled) {
-            onProgress(-1.0, "Installation cancelled")
+            onProgress(-1.0, "Kurulum iptal edildi")
             return false
         }
         patchShebangs(force = true)
         refreshDesktopMenus()
         val installed = ok && isDpkgPackageInstalled(packageName)
         if (installed) setStorePackageInstalled(packageName, true)
-        onProgress(if (installed) 1.0 else -1.0, if (installed) "$packageName installed" else "$packageName installation failed")
+        onProgress(if (installed) 1.0 else -1.0, if (installed) "$packageName kuruldu" else "$packageName kurulamadı")
         return installed
     }
 
@@ -1581,13 +1658,13 @@ class LinuxRuntime(private val context: Context) {
         onProgress: (Double, String) -> Unit,
     ): Boolean {
         if (!isSafePackageName(packageName) || isProtectedPackage(packageName)) {
-            onProgress(-1.0, "This package is required by DroidDesk")
+            onProgress(-1.0, "Bu paket DroidDesk için gereklidir")
             return false
         }
-        onProgress(0.15, "Removing $packageName...")
+        onProgress(0.15, "$packageName kaldırılıyor...")
         val output = executeCommand("apt-get remove -y $packageName")
         if (packageOperationCancelled) {
-            onProgress(-1.0, "Removal cancelled")
+            onProgress(-1.0, "Kaldırma iptal edildi")
             return false
         }
         patchShebangs(force = true)
@@ -1595,7 +1672,7 @@ class LinuxRuntime(private val context: Context) {
         refreshDesktopMenus()
         val removed = !isDpkgPackageInstalled(packageName)
         if (removed) setStorePackageInstalled(packageName, false)
-        onProgress(if (removed) 1.0 else -1.0, if (removed) "$packageName removed" else "$packageName removal failed")
+        onProgress(if (removed) 1.0 else -1.0, if (removed) "$packageName kaldırıldı" else "$packageName kaldırılamadı")
         return removed && !output.startsWith("Error:")
     }
 
@@ -1656,7 +1733,7 @@ class LinuxRuntime(private val context: Context) {
     private fun isProtectedPackage(packageName: String): Boolean =
         packageName in setOf(
             "apt", "bash", "coreutils", "dpkg", "termux-tools", "termux-am", "glibc-repo",
-            "x11-repo", "tur-repo", "pulseaudio", "dbus", "python", "xfce4", "xfce4-session",
+            "x11-repo", "tur-repo", "root-repo", "pulseaudio", "dbus", "python", "xfce4", "xfce4-session",
             "xfce4-panel", "xfdesktop", "xfwm4", "xfconf", "thunar", "xorg-xrandr",
         )
 
@@ -1865,6 +1942,10 @@ class LinuxRuntime(private val context: Context) {
             export NO_AT_BRIDGE=1
             export GTK_A11Y=none
             export DISPLAY=:0
+
+            # Masaüstü arayüz dili: Türkçe (çeviri dosyası olmayan
+            # programlar İngilizce'ye döner)
+            export LANGUAGE=tr:en
 
             # Use the session bus DroidDesk already started
             export DBUS_SESSION_BUS_ADDRESS="unix:path=${dbusSocket.absolutePath}"

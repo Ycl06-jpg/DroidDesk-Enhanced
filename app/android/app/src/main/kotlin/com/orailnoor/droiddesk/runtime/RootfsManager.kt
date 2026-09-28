@@ -113,7 +113,7 @@ class RootfsManager(private val context: Context) {
                 downloadDir.mkdirs()
                 val targetFile = File(downloadDir, "${distro}-rootfs.tar." + (if (distro == "kali") "xz" else "gz"))
 
-                onProgress(0.0, "Connecting to download server...")
+                onProgress(0.0, "İndirme sunucusuna bağlanılıyor...")
                 Log.i(TAG, "Downloading $distroName from $url")
 
                 val connection = URL(url).openConnection() as HttpURLConnection
@@ -131,7 +131,7 @@ class RootfsManager(private val context: Context) {
                 // Handle redirects or Already Satisfied (416)
                 if (connection.responseCode == 416) {
                     // Already fully downloaded
-                    onProgress(1.0, "$distroName already downloaded")
+                    onProgress(1.0, "$distroName zaten indirilmiş")
                     configFile.writeText(distro)
                     return@thread
                 }
@@ -158,12 +158,12 @@ class RootfsManager(private val context: Context) {
                 // Save distro selection
                 configFile.writeText(distro)
 
-                onProgress(1.0, "$distroName downloaded successfully")
+                onProgress(1.0, "$distroName başarıyla indirildi")
                 Log.i(TAG, "Download complete: ${targetFile.absolutePath}")
 
             } catch (e: Exception) {
-                Log.e(TAG, "Download failed: ${e.message}", e)
-                onProgress(-1.0, "Download failed: ${e.message}")
+                Log.e(TAG, "İndirme başarısız oldu: ${e.message}", e)
+                onProgress(-1.0, "İndirme başarısız oldu: ${e.message}")
             }
         }
     }
@@ -180,7 +180,7 @@ class RootfsManager(private val context: Context) {
         val expectedTotal = downloadedBytes + totalBytes
 
         if (totalBytes == 0L) {
-            onProgress(1.0, "$distroName downloaded successfully")
+            onProgress(1.0, "$distroName başarıyla indirildi")
             return
         }
 
@@ -198,7 +198,7 @@ class RootfsManager(private val context: Context) {
                         val totalMB = expectedTotal / (1024 * 1024)
                         onProgress(
                             progress,
-                            "Downloading $distroName: ${downloadedMB}MB / ${totalMB}MB"
+                            "$distroName indiriliyor: ${downloadedMB} MB / ${totalMB} MB"
                         )
                     }
                 }
@@ -222,7 +222,7 @@ class RootfsManager(private val context: Context) {
                 val tarball = File(downloadDir, "${distro}-rootfs.tar." + (if (distro == "kali") "xz" else "gz"))
 
                 if (!tarball.exists()) {
-                    onProgress(-1.0, "Rootfs tarball not found. Download first.")
+                    onProgress(-1.0, "Rootfs arşivi bulunamadı. Önce indirin.")
                     return@thread
                 }
 
@@ -232,7 +232,7 @@ class RootfsManager(private val context: Context) {
                 }
                 rootfsDir.mkdirs()
 
-                onProgress(0.1, "Extracting ${DISTRO_NAMES[distro]}...")
+                onProgress(0.1, "${DISTRO_NAMES[distro]} çıkarılıyor...")
                 Log.i(TAG, "Extracting rootfs from ${tarball.absolutePath}")
 
                 // Use ProcessBuilder to run tar extraction
@@ -254,7 +254,7 @@ class RootfsManager(private val context: Context) {
                 while (reader.readLine().also { line = it } != null) {
                     lastLine = line!!
                     if (lineCount % 500 == 0) {
-                        onProgress(0.1 + (lineCount % 5000) / 10000.0, "Extracting: $line")
+                        onProgress(0.1 + (lineCount % 5000) / 10000.0, "Çıkarılıyor: $line")
                     }
                     lineCount++
                 }
@@ -268,7 +268,7 @@ class RootfsManager(private val context: Context) {
                     throw RuntimeException("tar failed (code $exitCode): $lastLine")
                 }
 
-                onProgress(0.7, "Configuring Linux environment...")
+                onProgress(0.7, "Linux ortamı yapılandırılıyor...")
 
                 // Post-extraction configuration
                 configureRootfs()
@@ -279,12 +279,12 @@ class RootfsManager(private val context: Context) {
                 // Clean up tarball to save space
                 tarball.delete()
 
-                onProgress(1.0, "${DISTRO_NAMES[distro] ?: distro} setup complete")
+                onProgress(1.0, "${DISTRO_NAMES[distro] ?: distro} kurulumu tamamlandı")
                 Log.i(TAG, "Rootfs extraction complete. Size: ${getRootfsSizeMB()} MB")
 
             } catch (e: Exception) {
-                Log.e(TAG, "Extraction failed: ${e.message}", e)
-                onProgress(-1.0, "Extraction failed: ${e.message}")
+                Log.e(TAG, "Çıkarma başarısız oldu: ${e.message}", e)
+                onProgress(-1.0, "Çıkarma başarısız oldu: ${e.message}")
             }
         }
     }
@@ -393,7 +393,7 @@ class RootfsManager(private val context: Context) {
         thread(name = "de-install") {
             try {
                 // Forcefully release any stuck apt locks before starting
-                onProgress(0.0, "Clearing package manager locks...")
+                onProgress(0.0, "Paket yöneticisi kilitleri temizleniyor...")
                 try {
                     runtime.executeCommand("""
                         killall -9 apt apt-get dpkg 2>/dev/null || true
@@ -406,11 +406,11 @@ class RootfsManager(private val context: Context) {
                     Log.w(TAG, "Lock clearing failed, continuing anyway: ${e.message}")
                 }
                 
-                onProgress(0.0, "Updating package lists...")
+                onProgress(0.0, "Paket listeleri güncelleniyor...")
                 runtime.executeCommand("apt-get update -y", onLog)
                 
                 // Pre-configure Firefox PPA to fix Ubuntu snap issue
-                onProgress(0.1, "Configuring repositories...")
+                onProgress(0.1, "Depolar yapılandırılıyor...")
                 runtime.executeCommand("""
                     DEBIAN_FRONTEND=noninteractive TZ=Etc/UTC apt-get install -y software-properties-common wget gpg
                     add-apt-repository ppa:mozillateam/ppa -y
@@ -439,29 +439,29 @@ class RootfsManager(private val context: Context) {
                 // Fix broken dependencies from interrupted apt installs
                 runtime.executeCommand("DEBIAN_FRONTEND=noninteractive TZ=Etc/UTC apt-get install -f -y", onLog)
 
-                onProgress(0.2, "Installing $de packages...")
+                onProgress(0.2, "$de paketleri kuruluyor...")
                 runtime.executeCommand(
                     "DEBIAN_FRONTEND=noninteractive TZ=Etc/UTC apt-get install -y --no-install-recommends $packages", onLog
                 )
 
-                onProgress(0.8, "Installing core utilities...")
+                onProgress(0.8, "Temel yardımcı programlar kuruluyor...")
                 val result = runtime.executeCommand(
                     "DEBIAN_FRONTEND=noninteractive TZ=Etc/UTC apt-get install -y --no-install-recommends " +
                     "git wget curl python3 python3-pip htop nano sudo libgl1 x11-xserver-utils", onLog
                 )
 
-                onProgress(0.9, "Configuring embedded X11 display...")
+                onProgress(0.9, "Gömülü X11 ekranı yapılandırılıyor...")
                 
                 if (result.contains("E: ")) {
-                    throw Exception("Apt-get failed: Check terminal output.")
+                    throw Exception("Apt-get başarısız oldu: Terminal çıktısını kontrol edin.")
                 }
 
                 deConfigFile.writeText(de)
-                onProgress(1.0, "$de installation complete!")
+                onProgress(1.0, "$de kurulumu tamamlandı!")
 
             } catch (e: Exception) {
                 Log.e(TAG, "DE installation failed: ${e.message}", e)
-                onProgress(-1.0, "Installation failed: ${e.message}")
+                onProgress(-1.0, "Kurulum başarısız oldu: ${e.message}")
             }
         }
     }

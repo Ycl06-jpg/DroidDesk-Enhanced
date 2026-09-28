@@ -32,13 +32,13 @@ class X11ServiceClient(
                 try {
                     if (!active.get()) return@execute
                     if (!service.startServer()) {
-                        postError("The X11 service could not start the native server", null)
+                        postError("X11 hizmeti yerel sunucuyu başlatamadı", null)
                         return@execute
                     }
 
                     val connectionFd = service.xConnection
                     if (connectionFd == null) {
-                        postError("The X11 service returned no client connection", null)
+                        postError("X11 hizmeti istemci bağlantısı döndürmedi", null)
                         return@execute
                     }
                     val logcatFd = service.logcatOutput
@@ -52,21 +52,21 @@ class X11ServiceClient(
                         }
                     }
                 } catch (error: Throwable) {
-                    postError("Failed to communicate with the X11 service", error)
+                    postError("X11 hizmetiyle iletişim kurulamadı", error)
                 }
             }
         }
 
         override fun onServiceDisconnected(name: ComponentName) {
-            if (active.get()) postError("The X11 service process disconnected", null)
+            if (active.get()) postError("X11 hizmet süreci bağlantıyı kesti", null)
         }
 
         override fun onBindingDied(name: ComponentName) {
-            if (active.get()) postError("The X11 service binding died", null)
+            if (active.get()) postError("X11 hizmet bağlantısı koptu", null)
         }
 
         override fun onNullBinding(name: ComponentName) {
-            if (active.get()) postError("The X11 service returned a null binding", null)
+            if (active.get()) postError("X11 hizmeti boş bir bağlantı döndürdü", null)
         }
     }
 
@@ -78,7 +78,7 @@ class X11ServiceClient(
         // running so returning to the desktop can reuse the live connection.
         appContext.startService(intent)
         bound = appContext.bindService(intent, connection, Context.BIND_AUTO_CREATE)
-        if (!bound) postError("Android refused the X11 service binding", null)
+        if (!bound) postError("Android, X11 hizmet bağlantısını reddetti", null)
     }
 
     fun disconnect() {

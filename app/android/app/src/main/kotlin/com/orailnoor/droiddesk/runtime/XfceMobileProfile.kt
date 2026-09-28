@@ -39,21 +39,21 @@ object XfceMobileProfile {
             writeLauncher(
                 File(panelDir, "launcher-21/droiddesk-terminal.desktop"),
                 name = "Terminal",
-                comment = "Open the Linux terminal",
+                comment = "Linux terminalini aç",
                 exec = "xfce4-terminal",
                 icon = "org.xfce.terminalemulator",
             )
             writeLauncher(
                 File(panelDir, "launcher-22/droiddesk-files.desktop"),
-                name = "Files",
-                comment = "Browse files",
+                name = "Dosyalar",
+                comment = "Dosyalara göz at",
                 exec = "thunar %u",
                 icon = "org.xfce.filemanager",
             )
             writeLauncher(
                 File(panelDir, "launcher-23/droiddesk-browser.desktop"),
-                name = "Web Browser",
-                comment = "Browse the web",
+                name = "Web Tarayıcı",
+                comment = "Web'de gezin",
                 exec = "exo-open --launch WebBrowser %u",
                 icon = "org.xfce.webbrowser",
             )

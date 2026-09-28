@@ -1,5 +1,5 @@
 name: droiddesk
-description: "DroidDesk - Full Linux Desktop on Android"
+description: "DroidDesk - Android'de Tam Linux Masaüstü"
 publish_to: 'none'
 version: 0.1.0
 
@@ -8,6 +8,8 @@ environment:
 
 dependencies:
   flutter:
+    sdk: flutter
+  flutter_localizations:
     sdk: flutter
   google_fonts: ^6.2.1
   provider: ^6.1.2

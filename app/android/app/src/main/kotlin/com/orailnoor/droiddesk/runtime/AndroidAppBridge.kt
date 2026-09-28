@@ -154,10 +154,10 @@ object AndroidAppBridge {
             listFiles()?.forEach { it.delete() }
         }
         val folders = listOf(
-            Triple("home", "Home folder", homePath),
-            Triple("downloads", "Downloads", "$homePath/Downloads"),
-            Triple("documents", "Documents", "$homePath/Documents"),
-            Triple("pictures", "Pictures", "$homePath/Pictures"),
+            Triple("home", "Ev klasörü", homePath),
+            Triple("downloads", "İndirilenler", "$homePath/Downloads"),
+            Triple("documents", "Belgeler", "$homePath/Documents"),
+            Triple("pictures", "Resimler", "$homePath/Pictures"),
         )
         folders.forEach { (id, label, path) ->
             File(homeDir, id.replaceFirstChar { it.uppercase() }).takeIf { id != "home" }?.mkdirs()
@@ -166,7 +166,7 @@ object AndroidAppBridge {
                 [Desktop Entry]
                 Type=Application
                 Name=$label
-                Comment=Open $label in Linux Files
+                Comment=$label klasörünü Linux Dosyalar'da aç
                 Exec=thunar ${desktopEscape(path)}
                 Icon=folder
                 Terminal=false
@@ -176,19 +176,19 @@ object AndroidAppBridge {
             )
         }
         listOf(
-            Triple("wifi", "Wi-Fi settings", "network-wireless"),
-            Triple("bluetooth", "Bluetooth settings", "bluetooth"),
-            Triple("display", "Display and brightness", "video-display"),
-            Triple("sound", "Sound and volume", "audio-volume-high"),
-            Triple("hotspot", "Mobile hotspot", "network-transmit-receive"),
-            Triple("battery", "Battery saver", "battery"),
+            Triple("wifi", "Wi-Fi ayarları", "network-wireless"),
+            Triple("bluetooth", "Bluetooth ayarları", "bluetooth"),
+            Triple("display", "Ekran ve parlaklık", "video-display"),
+            Triple("sound", "Ses ve ses düzeyi", "audio-volume-high"),
+            Triple("hotspot", "Mobil hotspot", "network-transmit-receive"),
+            Triple("battery", "Pil tasarrufu", "battery"),
         ).forEach { (id, label, icon) ->
             File(appsDir, "droiddesk-setting-$id.desktop").writeText(
                 """
                 [Desktop Entry]
                 Type=Application
                 Name=$label
-                Comment=Open Android $label
+                Comment=Android $label bölümünü aç
                 Exec=$pythonPath $launcherPath action:$id
                 Icon=$icon
                 Terminal=false

@@ -441,7 +441,7 @@ class HomeScreen extends StatelessWidget {
       case 'kali':
         return 'Kali Linux';
       case 'termux-native':
-        return 'Termux Native';
+        return 'Yerel Termux';
       default:
         return distro;
     }

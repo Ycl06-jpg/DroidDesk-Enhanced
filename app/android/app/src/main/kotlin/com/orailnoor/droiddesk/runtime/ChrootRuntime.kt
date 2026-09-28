@@ -136,7 +136,8 @@ class ChrootRuntime(private val context: Context) {
                 export NO_AT_BRIDGE=1
                 export GTK_A11Y=none
 
-                # Locale
+                # Locale: komut çıktıları C.UTF-8 kalır (betik uyumluluğu),
+                # masaüstü oturumu ayrıca Türkçe arayüz dilini kullanır.
                 export LANG=C.UTF-8
                 export LC_ALL=C.UTF-8
                 export LANGUAGE=C.UTF-8
@@ -153,6 +154,7 @@ class ChrootRuntime(private val context: Context) {
             deb http://ports.ubuntu.com/ubuntu-ports noble main restricted universe multiverse
             deb http://ports.ubuntu.com/ubuntu-ports noble-updates main restricted universe multiverse
             deb http://ports.ubuntu.com/ubuntu-ports noble-security main restricted universe multiverse
+            deb http://ports.ubuntu.com/ubuntu-ports noble-backports main restricted universe multiverse
             """.trimIndent().trim() + "\n"
         )
 
@@ -177,39 +179,39 @@ class ChrootRuntime(private val context: Context) {
         onLog: (String) -> Unit = {}
     ) {
         if (!hasRoot()) {
-            onProgress(-1.0, "Root access required for chroot mode")
+            onProgress(-1.0, "Chroot modu için root erişimi gerekli")
             return
         }
         if (!isRootfsReady()) {
-            onProgress(-1.0, "Rootfs not ready. Download and extract first.")
+            onProgress(-1.0, "Rootfs hazır değil. Önce indirip çıkarın.")
             return
         }
 
         thread(name = "chroot-de-install") {
             try {
-                onProgress(0.0, "Mounting rootfs...")
+                onProgress(0.0, "Rootfs bağlanıyor...")
                 ensureMounts()
 
-                onProgress(0.05, "Updating package lists...")
+                onProgress(0.05, "Paket listeleri güncelleniyor...")
                 if (execChroot("apt-get update -y", onLog) != 0) {
-                    throw IllegalStateException("Package index update failed")
+                    throw IllegalStateException("Paket dizini güncellenemedi")
                 }
 
-                onProgress(0.1, "Installing core tools...")
+                onProgress(0.1, "Temel araçlar kuruluyor...")
                 if (execChroot(
                     "DEBIAN_FRONTEND=noninteractive TZ=Etc/UTC apt-get install -y --no-install-recommends " +
                             "locales ca-certificates wget curl dbus-x11 xclip",
                     onLog
-                ) != 0) throw IllegalStateException("Core package installation failed")
+                ) != 0) throw IllegalStateException("Temel paketler kurulamadı")
 
-                onProgress(0.2, "Installing Mesa GPU drivers...")
+                onProgress(0.2, "Mesa GPU sürücüleri kuruluyor...")
                 if (execChroot(
                     "DEBIAN_FRONTEND=noninteractive TZ=Etc/UTC apt-get install -y --no-install-recommends " +
                             "mesa-vulkan-drivers mesa-opencl-icd libgl1-mesa-dri libglx-mesa0 vulkan-tools",
                     onLog
                 ) != 0) Log.w(TAG, "Mesa packages unavailable; desktop will use available software rendering")
 
-                onProgress(0.4, "Installing desktop environment...")
+                onProgress(0.4, "Masaüstü ortamı kuruluyor...")
                 val dePackages = when (desktopEnv) {
                     "lxqt" -> "lxqt qterminal pcmanfm-qt featherpad"
                     "mate" -> "mate-desktop-environment mate-terminal"
@@ -219,25 +221,36 @@ class ChrootRuntime(private val context: Context) {
                 if (execChroot(
                     "DEBIAN_FRONTEND=noninteractive TZ=Etc/UTC apt-get install -y --no-install-recommends $dePackages",
                     onLog
-                ) != 0) throw IllegalStateException("Desktop package installation failed")
+                ) != 0) throw IllegalStateException("Masaüstü paketleri kurulamadı")
 
-                onProgress(0.8, "Installing Desktop Essentials tools...")
+                onProgress(0.8, "Temel Masaüstü araçları kuruluyor...")
                 val essentialsExit = execChroot(
                     "DEBIAN_FRONTEND=noninteractive TZ=Etc/UTC apt-get install -y --no-install-recommends " +
                             "git nano htop wget curl python3 python3-pip openssh-client",
                     onLog
                 )
-                if (essentialsExit != 0) throw IllegalStateException("Desktop Essentials package installation failed")
+                if (essentialsExit != 0) throw IllegalStateException("Temel Masaüstü Paketleri kurulamadı")
 
-                onProgress(0.9, "Cleaning up...")
+                // Türkçe dil desteği: masaüstü menüleri ve uygulamalar Türkçe görünür.
+                // Başarısız olursa kurulum durmaz; arayüz İngilizce kalır.
+                onProgress(0.85, "Türkçe dil paketleri kuruluyor...")
+                val trExit = execChroot(
+                    "DEBIAN_FRONTEND=noninteractive TZ=Etc/UTC apt-get install -y --no-install-recommends " +
+                            "language-pack-tr language-pack-gnome-tr",
+                    onLog
+                )
+                if (trExit != 0) Log.w(TAG, "Turkish language packs unavailable; desktop stays in English")
+                execChroot("locale-gen tr_TR.UTF-8 || true", onLog)
+
+                onProgress(0.9, "Temizleniyor...")
                 execChroot("apt-get clean", onLog)
 
                 File(rootfsDir, CHROOT_DE_MARKER).writeText("$desktopEnv\n")
-                onProgress(1.0, "$desktopEnv installed in chroot")
+                onProgress(1.0, "$desktopEnv chroot içine kuruldu")
                 Log.i(TAG, "Desktop environment installation complete")
             } catch (e: Exception) {
                 Log.e(TAG, "DE install failed", e)
-                onProgress(-1.0, "Installation failed: ${e.message}")
+                onProgress(-1.0, "Kurulum başarısız oldu: ${e.message}")
             }
         }
     }
@@ -249,13 +262,13 @@ class ChrootRuntime(private val context: Context) {
     ): Boolean {
         if (!hasRoot() || !isDesktopInstalled()) return false
         if (getOptionalAppsStatus()[appId] == true) {
-            onProgress(1.0, "Already installed")
+            onProgress(1.0, "Zaten kurulu")
             return true
         }
 
         return try {
             ensureMounts()
-            onProgress(0.05, "Repairing interrupted packages...")
+            onProgress(0.05, "Yarım kalan paketler onarılıyor...")
             execChroot("DEBIAN_FRONTEND=noninteractive dpkg --configure -a", onLog)
 
             val command = when (appId) {
@@ -285,14 +298,14 @@ class ChrootRuntime(private val context: Context) {
                 else -> return false
             }
 
-            onProgress(0.25, "Installing optional application...")
+            onProgress(0.25, "İsteğe bağlı uygulama kuruluyor...")
             val exitCode = execChroot(command, onLog)
-            if (exitCode != 0) throw IllegalStateException("Package manager exited with code $exitCode")
-            onProgress(1.0, "Installation complete")
+            if (exitCode != 0) throw IllegalStateException("Paket yöneticisi $exitCode koduyla sonlandı")
+            onProgress(1.0, "Kurulum tamamlandı")
             true
         } catch (error: Exception) {
             Log.e(TAG, "Optional app installation failed: $appId", error)
-            onProgress(-1.0, "Installation failed: ${error.message}")
+            onProgress(-1.0, "Kurulum başarısız oldu: ${error.message}")
             false
         }
     }
@@ -375,6 +388,14 @@ class ChrootRuntime(private val context: Context) {
             export DBUS_SESSION_BUS_ADDRESS=unix:path=/tmp/dbus-session
             rm -f /tmp/dbus-session
             dbus-daemon --session --address="${'$'}DBUS_SESSION_BUS_ADDRESS" --fork --nopidfile
+
+            # Masaüstü arayüz dili: Türkçe (tr_TR yerel ayarı üretilmişse)
+            if locale -a 2>/dev/null | grep -qi '^tr_TR\.utf-\?8${'$'}'; then
+                unset LC_ALL
+                export LANG=tr_TR.UTF-8
+                export LANGUAGE=tr:en
+                export LC_CTYPE=C.UTF-8
+            fi
 
             # Make sure X11 socket dir exists in case bind mount was late
             mkdir -p /tmp/.X11-unix

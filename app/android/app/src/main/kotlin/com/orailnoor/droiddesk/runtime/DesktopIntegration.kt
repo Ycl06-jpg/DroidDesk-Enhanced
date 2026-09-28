@@ -58,15 +58,15 @@ class DesktopIntegration(private val context: Context) {
         }
 
         val shortcuts = listOf(
-            mapOf("label" to "Home folder", "subtitle" to "Your Linux files", "source" to "Files", "kind" to "folder", "id" to "home"),
-            mapOf("label" to "Downloads", "subtitle" to "Downloaded files", "source" to "Files", "kind" to "folder", "id" to "Downloads"),
-            mapOf("label" to "Documents", "subtitle" to "Documents folder", "source" to "Files", "kind" to "folder", "id" to "Documents"),
-            mapOf("label" to "Pictures", "subtitle" to "Pictures folder", "source" to "Files", "kind" to "folder", "id" to "Pictures"),
-            mapOf("label" to "Wi-Fi settings", "subtitle" to "Manage Android networks", "source" to "Settings", "kind" to "setting", "id" to "wifi"),
-            mapOf("label" to "Bluetooth settings", "subtitle" to "Manage Android devices", "source" to "Settings", "kind" to "setting", "id" to "bluetooth"),
-            mapOf("label" to "Display settings", "subtitle" to "Brightness and screen", "source" to "Settings", "kind" to "setting", "id" to "display"),
-            mapOf("label" to "Sound settings", "subtitle" to "Volume and audio", "source" to "Settings", "kind" to "setting", "id" to "sound"),
-            mapOf("label" to "Hotspot settings", "subtitle" to "Share mobile internet", "source" to "Settings", "kind" to "setting", "id" to "hotspot"),
+            mapOf("label" to "Ev klasörü", "subtitle" to "Linux dosyalarınız", "source" to "Dosyalar", "kind" to "folder", "id" to "home"),
+            mapOf("label" to "İndirilenler", "subtitle" to "İndirilen dosyalar", "source" to "Dosyalar", "kind" to "folder", "id" to "Downloads"),
+            mapOf("label" to "Belgeler", "subtitle" to "Belgeler klasörü", "source" to "Dosyalar", "kind" to "folder", "id" to "Documents"),
+            mapOf("label" to "Resimler", "subtitle" to "Resimler klasörü", "source" to "Dosyalar", "kind" to "folder", "id" to "Pictures"),
+            mapOf("label" to "Wi-Fi ayarları", "subtitle" to "Android ağlarını yönet", "source" to "Ayarlar", "kind" to "setting", "id" to "wifi"),
+            mapOf("label" to "Bluetooth ayarları", "subtitle" to "Android cihazlarını yönet", "source" to "Ayarlar", "kind" to "setting", "id" to "bluetooth"),
+            mapOf("label" to "Ekran ayarları", "subtitle" to "Parlaklık ve ekran", "source" to "Ayarlar", "kind" to "setting", "id" to "display"),
+            mapOf("label" to "Ses ayarları", "subtitle" to "Ses düzeyi ve ses", "source" to "Ayarlar", "kind" to "setting", "id" to "sound"),
+            mapOf("label" to "Hotspot ayarları", "subtitle" to "Mobil interneti paylaş", "source" to "Ayarlar", "kind" to "setting", "id" to "hotspot"),
         )
         results += shortcuts.filter { item ->
             needle.isEmpty() || item.values.any { it.lowercase().contains(needle) }
@@ -102,7 +102,7 @@ class DesktopIntegration(private val context: Context) {
         val home = linuxHome(rooted)
         val rollback = File(home.parentFile, "${home.name}.before-restore")
         if (rollback.exists()) rollback.deleteRecursively()
-        if (home.exists() && !home.renameTo(rollback)) error("Could not preserve the current Linux home")
+        if (home.exists() && !home.renameTo(rollback)) error("Mevcut Linux ev dizini korunamadı")
         home.mkdirs()
         val packages = mutableListOf<String>()
         var snapshotMode: String? = null
@@ -138,7 +138,7 @@ class DesktopIntegration(private val context: Context) {
             }
             val expectedMode = if (rooted) "chroot" else "native"
             require(snapshotMode == expectedMode) {
-                "This snapshot belongs to a different Linux runtime mode"
+                "Bu anlık görüntü farklı bir Linux çalışma modu için alınmış"
             }
             rollback.deleteRecursively()
             return packages.distinct()

@@ -123,7 +123,7 @@ class MainActivity : FlutterActivity() {
                 Log.i(TAG, "Auto-setup: checking root...")
                 if (!chrootRuntime.hasRoot()) {
                     runOnUiThread {
-                        android.widget.Toast.makeText(this, "Auto-setup requires root", android.widget.Toast.LENGTH_LONG).show()
+                        android.widget.Toast.makeText(this, "Otomatik kurulum root gerektirir", android.widget.Toast.LENGTH_LONG).show()
                     }
                     return@thread
                 }
@@ -141,7 +141,7 @@ class MainActivity : FlutterActivity() {
                         }
                     }
                     dlLatch.await()
-                    if (!dlOk) throw RuntimeException("Rootfs download failed")
+                    if (!dlOk) throw RuntimeException("Rootfs indirilemedi")
 
                     Log.i(TAG, "Auto-setup: extracting rootfs...")
                     val exLatch = java.util.concurrent.CountDownLatch(1)
@@ -153,7 +153,7 @@ class MainActivity : FlutterActivity() {
                         }
                     }
                     exLatch.await()
-                    if (!exOk) throw RuntimeException("Rootfs extraction failed")
+                    if (!exOk) throw RuntimeException("Rootfs çıkarılamadı")
                 }
 
                 if (!chrootRuntime.isDesktopInstalled()) {
@@ -171,7 +171,7 @@ class MainActivity : FlutterActivity() {
                         onLog = {}
                     )
                     inLatch.await()
-                    if (!inOk) throw RuntimeException("Desktop installation failed")
+                    if (!inOk) throw RuntimeException("Masaüstü kurulamadı")
                 }
 
                 Log.i(TAG, "Auto-setup: launching desktop...")
@@ -186,7 +186,7 @@ class MainActivity : FlutterActivity() {
             } catch (e: Exception) {
                 Log.e(TAG, "Auto-setup failed", e)
                 runOnUiThread {
-                    android.widget.Toast.makeText(this, "Auto-setup failed: ${e.message}", android.widget.Toast.LENGTH_LONG).show()
+                    android.widget.Toast.makeText(this, "Otomatik kurulum başarısız oldu: ${e.message}", android.widget.Toast.LENGTH_LONG).show()
                 }
             }
         }
@@ -231,7 +231,7 @@ class MainActivity : FlutterActivity() {
                         "cpuAbi" to Build.SUPPORTED_ABIS.firstOrNull(),
                         "gpuVendor" to getGpuVendor(),
                         "graphicsMode" to if (chrootRuntime.hasRoot()) {
-                            "Software (llvmpipe)"
+                            "Yazılımsal (llvmpipe)"
                         } else {
                             linuxRuntime.getGraphicsMode()
                         },
@@ -604,7 +604,7 @@ class MainActivity : FlutterActivity() {
                                 runOnUiThread {
                                     Toast.makeText(
                                         this@MainActivity,
-                                        "Native Linux setup failed. Check the setup log.",
+                                        "Yerel Linux kurulumu başarısız oldu. Kurulum günlüğünü kontrol edin.",
                                         Toast.LENGTH_LONG,
                                     ).show()
                                     result.success(false)
@@ -806,7 +806,7 @@ class MainActivity : FlutterActivity() {
                 "onPackageOperationProgress",
                 mapOf(
                     "progress" to -1.0,
-                    "status" to "Previous package operation is still stopping. Try again.",
+                    "status" to "Önceki paket işlemi hâlâ durduruluyor. Tekrar deneyin.",
                 ),
             )
             result.success(false)
@@ -840,7 +840,7 @@ class MainActivity : FlutterActivity() {
                 runOnUiThread { result.success(ok) }
             } catch (error: Throwable) {
                 Log.e(TAG, "Package operation failed for $packageName", error)
-                progress(-1.0, error.message ?: "Package operation failed")
+                progress(-1.0, error.message ?: "Paket işlemi başarısız oldu")
                 runOnUiThread { result.success(false) }
             } finally {
                 linuxRuntime.setInstallLogSink(null)
@@ -898,7 +898,7 @@ class MainActivity : FlutterActivity() {
 
     private fun requestDefaultLauncher() {
         if (isDefaultLauncher()) {
-            Toast.makeText(this, "DroidDesk is already the default launcher", Toast.LENGTH_SHORT).show()
+            Toast.makeText(this, "DroidDesk zaten varsayılan başlatıcı", Toast.LENGTH_SHORT).show()
             return
         }
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
@@ -937,13 +937,13 @@ class MainActivity : FlutterActivity() {
 
     private fun openHomeChooser() {
         val homeIntent = Intent(Intent.ACTION_MAIN).addCategory(Intent.CATEGORY_HOME)
-        startActivity(Intent.createChooser(homeIntent, "Choose your Home app"))
+        startActivity(Intent.createChooser(homeIntent, "Ana Ekran uygulamanızı seçin"))
     }
 
     private fun openHomeSettings() {
         Toast.makeText(
             this,
-            "Android requires you to select another default Home app",
+            "Android, başka bir varsayılan Ana Ekran uygulaması seçmenizi istiyor",
             Toast.LENGTH_LONG,
         ).show()
         startActivity(Intent(Settings.ACTION_HOME_SETTINGS))

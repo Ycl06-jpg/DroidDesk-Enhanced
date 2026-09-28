@@ -83,7 +83,7 @@ class RootShell(private val context: Context) {
      * Execute a shell command as root. Returns stdout+stderr combined.
      */
     fun exec(command: String): String {
-        val su = findSuPath() ?: throw RootException("No su binary found. Is this device rooted?")
+        val su = findSuPath() ?: throw RootException("su dosyası bulunamadı. Bu cihaz root'lu mu?")
         return execSync(su, command)
     }
 
@@ -91,7 +91,7 @@ class RootShell(private val context: Context) {
      * Execute a command as root and stream output chunks.
      */
     fun exec(command: String, onOutput: (String) -> Unit): Int {
-        val su = findSuPath() ?: throw RootException("No su binary found. Is this device rooted?")
+        val su = findSuPath() ?: throw RootException("su dosyası bulunamadı. Bu cihaz root'lu mu?")
         return execStream(su, command, onOutput)
     }
 

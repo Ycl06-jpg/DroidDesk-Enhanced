@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:provider/provider.dart';
 import 'package:droiddesk/theme/droid_theme.dart';
 import 'package:droiddesk/state/app_state.dart';
@@ -58,6 +59,15 @@ class _DroidDeskAppState extends State<DroidDeskApp> {
     return MaterialApp(
       title: 'DroidDesk',
       debugShowCheckedModeBanner: false,
+      // Uygulama her zaman Türkçe: Flutter'ın yerleşik metinleri
+      // (Geri, Kopyala, Yapıştır, ipuçları vb.) de Türkçe gösterilir.
+      locale: const Locale('tr', 'TR'),
+      supportedLocales: const [Locale('tr', 'TR')],
+      localizationsDelegates: const [
+        GlobalMaterialLocalizations.delegate,
+        GlobalWidgetsLocalizations.delegate,
+        GlobalCupertinoLocalizations.delegate,
+      ],
       theme: DroidTheme.lightThemeData,
       darkTheme: DroidTheme.darkThemeData,
       themeMode: state.themeMode,

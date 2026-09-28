@@ -61,12 +61,12 @@ class DesktopActivity : Activity() {
     private var loadingStartedAt = 0L
     private var estimatedLoadingSeconds = 30
     private val loadingMessages = listOf(
-        "Waking up your portable Linux workspace",
-        "Connecting Android to your Linux desktop",
-        "Starting the desktop engine and services",
-        "Loading your apps, icons, and shortcuts",
-        "Polishing your panels, wallpaper, and workspace",
-        "Almost ready for your next big idea",
+        "Taşınabilir Linux çalışma alanınız uyandırılıyor",
+        "Android, Linux masaüstünüze bağlanıyor",
+        "Masaüstü motoru ve hizmetleri başlatılıyor",
+        "Uygulamalarınız, simgeleriniz ve kısayollarınız yükleniyor",
+        "Paneller, duvar kâğıdı ve çalışma alanı hazırlanıyor",
+        "Bir sonraki büyük fikriniz için neredeyse hazır",
     )
     private val loadingMessageTicker = object : Runnable {
         override fun run() {
@@ -89,9 +89,9 @@ class DesktopActivity : Activity() {
             val elapsedSeconds = ((android.os.SystemClock.elapsedRealtime() - loadingStartedAt) / 1_000).toInt()
             val remaining = (estimatedLoadingSeconds - elapsedSeconds).coerceAtLeast(0)
             estimate.text = if (remaining > 0) {
-                "About $remaining seconds remaining"
+                "Yaklaşık $remaining saniye kaldı"
             } else {
-                "Finishing up…"
+                "Tamamlanıyor…"
             }
             estimate.contentDescription = estimate.text
             if (!desktopRevealed) loadingMessageHandler.postDelayed(this, 1_000)
@@ -250,7 +250,7 @@ class DesktopActivity : Activity() {
                 } catch (error: Throwable) {
                     connectionFd.close()
                     logcatFd?.close()
-                    showX11Error("Failed to attach LorieView to the X11 service", error)
+                    showX11Error("LorieView, X11 hizmetine bağlanamadı", error)
                 }
             },
             onError = ::showX11Error,
@@ -287,21 +287,21 @@ class DesktopActivity : Activity() {
         }
 
         val dragHandle = controlButton("⋮").apply {
-            contentDescription = "Drag desktop controls"
+            contentDescription = "Masaüstü denetimlerini sürükle"
             setPadding((8 * density).toInt(), 0, (8 * density).toInt(), 0)
         }
         val keyboardButton = controlButton("Keyboard").apply {
             setOnClickListener { showKeyboard() }
         }
-        inputModeButton = controlButton(inputController?.modeLabel() ?: "Trackpad").apply {
+        inputModeButton = controlButton(inputController?.modeLabel() ?: "Dokunmatik yüzey").apply {
             setOnClickListener {
                 inputController?.nextMode()
-                text = inputController?.modeLabel() ?: "Trackpad"
-                Toast.makeText(this@DesktopActivity, "Input mode: $text", Toast.LENGTH_SHORT).show()
+                text = inputController?.modeLabel() ?: "Dokunmatik yüzey"
+                Toast.makeText(this@DesktopActivity, "Giriş modu: $text", Toast.LENGTH_SHORT).show()
             }
         }
         val hideButton = controlButton("−").apply {
-            contentDescription = "Hide desktop controls"
+            contentDescription = "Masaüstü denetimlerini gizle"
             setOnClickListener { setControlsCollapsed(true) }
             setPadding((9 * density).toInt(), 0, (9 * density).toInt(), 0)
         }
@@ -324,7 +324,7 @@ class DesktopActivity : Activity() {
         }
 
         collapsedControl = controlButton("☰").apply {
-            contentDescription = "Show desktop controls"
+            contentDescription = "Masaüstü denetimlerini göster"
             // Keep this measured so switching from a dragged full overlay can
             // copy absolute coordinates without placing the restore handle off-screen.
             visibility = View.INVISIBLE
@@ -480,7 +480,7 @@ class DesktopActivity : Activity() {
         content.addView(ProgressBar(this).apply {
             isIndeterminate = true
             indeterminateTintList = ColorStateList.valueOf(Color.WHITE)
-            contentDescription = "Loading Linux desktop"
+            contentDescription = "Linux masaüstü yükleniyor"
         }, LinearLayout.LayoutParams(
             (42 * density).toInt(),
             (42 * density).toInt(),
@@ -500,7 +500,7 @@ class DesktopActivity : Activity() {
             ).apply { topMargin = (14 * density).toInt() })
         }
         loadingEstimate = TextView(this).apply {
-            text = "About $estimatedLoadingSeconds seconds remaining"
+            text = "Yaklaşık $estimatedLoadingSeconds saniye kaldı"
             textSize = 12f
             setTextColor(Color.rgb(130, 143, 164))
             gravity = Gravity.CENTER
@@ -556,7 +556,7 @@ class DesktopActivity : Activity() {
 
     private fun showX11Error(message: String, error: Throwable?) {
         Log.e(TAG, message, error)
-        Toast.makeText(this, "X11 Error: $message", Toast.LENGTH_LONG).show()
+        Toast.makeText(this, "X11 Hatası: $message", Toast.LENGTH_LONG).show()
     }
 
     override fun onDestroy() {

@@ -38,9 +38,9 @@ class X11InputController(private val lorieView: LorieView) {
     }
 
     fun modeLabel(): String = when (mode) {
-        TouchInputHandler.InputMode.SIMULATED_TOUCH -> "Touchscreen"
-        TouchInputHandler.InputMode.TOUCH -> "Direct touch"
-        else -> "Trackpad"
+        TouchInputHandler.InputMode.SIMULATED_TOUCH -> "Dokunmatik ekran"
+        TouchInputHandler.InputMode.TOUCH -> "Doğrudan dokunma"
+        else -> "Dokunmatik yüzey"
     }
 
     fun dispose() {

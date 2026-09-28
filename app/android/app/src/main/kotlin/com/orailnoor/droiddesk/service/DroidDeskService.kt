@@ -39,7 +39,7 @@ class DroidDeskService : Service() {
     }
 
     override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
-        val notification = buildNotification("Linux desktop is running")
+        val notification = buildNotification("Linux masaüstü çalışıyor")
 
         ServiceCompat.startForeground(
             this,
@@ -69,10 +69,10 @@ class DroidDeskService : Service() {
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
             val channel = NotificationChannel(
                 CHANNEL_ID,
-                "DroidDesk Linux Service",
+                "DroidDesk Linux Hizmeti",
                 NotificationManager.IMPORTANCE_LOW
             ).apply {
-                description = "Keeps the Linux desktop environment running"
+                description = "Linux masaüstü ortamının çalışmaya devam etmesini sağlar"
                 setShowBadge(false)
             }
             val manager = getSystemService(NotificationManager::class.java)
