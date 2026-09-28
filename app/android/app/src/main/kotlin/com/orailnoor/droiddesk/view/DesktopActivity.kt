@@ -290,7 +290,7 @@ class DesktopActivity : Activity() {
             contentDescription = "Masaüstü denetimlerini sürükle"
             setPadding((8 * density).toInt(), 0, (8 * density).toInt(), 0)
         }
-        val keyboardButton = controlButton("Keyboard").apply {
+        val keyboardButton = controlButton("Klavye").apply {
             setOnClickListener { showKeyboard() }
         }
         inputModeButton = controlButton(inputController?.modeLabel() ?: "Dokunmatik yüzey").apply {
